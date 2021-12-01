@@ -1,3 +1,5 @@
-#!/bin/sh
+#!/bin/sh -x
 
-cmake-format -i CMakeLists.txt
+clang-format -style=file -i *.cpp
+clang-format -style=file -i *.h
+cmake-format -i CMakeLists.txt doc/CMakeLists.txt

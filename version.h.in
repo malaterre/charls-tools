@@ -1,0 +1,8 @@
+#pragma once
+
+#cmakedefine JLST_VERSION "@JLST_VERSION@"
+
+// https://stackoverflow.com/questions/30027016/cannot-export-cmake-project-version-major-because-it-equals-zero
+#define JLST_VERSION_MAJOR "@JLST_VERSION_MAJOR@"
+#define JLST_VERSION_MINOR "@JLST_VERSION_MINOR@"
+#define JLST_VERSION_PATCH "@JLST_VERSION_PATCH@"
