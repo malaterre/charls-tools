@@ -115,3 +115,17 @@ foreach(exe cjpls djpls jplsinfo)
     COMPONENT libraries)
   # https://stackoverflow.com/questions/5096881/does-set-target-properties-in-cmake-override-cmake-cxx-flags
 endforeach()
+
+# locate charls root:
+find_path(
+  CHARLS_ROOT "test/SIEMENS-MR-RGB-16Bits.dcm"
+  PATHS $ENV{CHARLS_ROOT} ${PROJECT_SOURCE_DIR}/../charls
+  NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+mark_as_advanced(CHARLS_ROOT)
+
+# test:
+enable_testing()
+include(CTest) # Memcheck
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
