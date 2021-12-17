@@ -4,10 +4,21 @@
 #include "utils.h"
 
 #include <fstream>
+#include <limits>
 #include <sstream>
 #include <vector>
 
 namespace jlst {
+// Return 12 for input `4095`
+constexpr std::uint32_t log2(const std::uint32_t n) noexcept
+{
+    std::uint32_t x{};
+    while (n > (1u << x))
+    {
+        ++x;
+    }
+    return x;
+}
 bool pnm::detect(const cjpls_options& options)
 {
     const char* filename = options.input.c_str();
@@ -90,21 +101,16 @@ void pnm::read_info()
     std::getline(fs, str);
     {
         std::stringstream ss(str);
-        int i;
+        long int i;
         ss >> i;
-        if (i < 1 << 8)
-        {
-            info_.bits_per_sample = 8;
-        }
-        else if (i < 1 << 16)
-        {
-            info_.bits_per_sample = 16;
-        }
-        else
+        if (i <= 0 || i >= std::numeric_limits<uint32_t>::max())
             throw std::invalid_argument(str);
+
+        info_.bits_per_sample = log2(i);
     }
     // now is a good time to compute stride:
-    stride_ = info_.width * (info_.bits_per_sample / 8) * info_.component_count;
+    auto const bytes_per_sample{(info_.bits_per_sample + 7) / 8};
+    stride_ = info_.width * bytes_per_sample * info_.component_count;
 }
 
 void pnm::read_data(void* buffer, size_t len)

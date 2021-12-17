@@ -26,7 +26,8 @@ jlst::image load_image(jlst::format& format, const jlst::cjpls_options& options)
     input_image.stride() = format.get_stride();
     auto const& info = input_image.frame_info();
     auto& pixel_data = input_image.pixel_data();
-    pixel_data.resize(info.width * info.height * (info.bits_per_sample / 8) * info.component_count);
+    auto const bytes_per_sample{(info.bits_per_sample + 7) / 8};
+    pixel_data.resize(info.width * info.height * bytes_per_sample * info.component_count);
     format.read_data(pixel_data.data(), pixel_data.size());
 
     return input_image;
