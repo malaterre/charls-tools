@@ -1,0 +1,91 @@
+% JPLSINFO(1) jplsinfo @JLST_VERSION@
+% Mathieu Malaterre
+% @JLST_DATE@
+
+# NAME
+
+jplsinfo – print information about JPEG-LS files
+
+# SYNOPSIS
+
+**jplsinfo**␣[**--pretty**]␣[**--format**␣*format*]␣*input.jls*␣[*...*]
+
+# DESCRIPTION
+
+**jplsinfo** displays information about files created according to the JPEG-LS specification (aka ITU 87). By default, the SPIFF header is printed, then the actual JPEG-LS header and eventually a hash sum of the image.
+
+# OPTIONS
+
+**-h**, **--help**
+:   Display a friendly help message.
+
+**--version**
+:   Display the current version of charls-tools as well as the underlying charls version used.
+
+**-i**, **--input**
+:   Specify the input file(s) to read.
+
+**-f**, **--format**
+:   Specify the output format to use (json/xml/yaml).
+
+**--pretty**
+:   Prettify the output for each format (if supported)
+
+# EXAMPLES
+
+```
+{
+  "header" : {
+    "frame_info" : {
+      "width" : 512,
+      "height" : 512,
+      "bits_per_sample" : 8,
+      "component_count" : 1
+    },
+    "near_lossless" : 0,
+    "interleave_mode" : "none",
+    "preset_coding_parameters" : {
+      "maximum_sample_value" : 0,
+      "threshold1" : 0,
+      "threshold2" : 0,
+      "threshold3" : 0,
+      "reset_value" : 0
+    },
+    "color_transformation" : "none"
+  }
+}
+```
+
+```
+---
+spiff_header:
+  profile_id: none
+  component_count: 1
+  height: 512
+  width: 512
+  color_space: grayscale
+  bits_per_sample: 16
+  compression_type: jpeg_ls
+  resolution_units: aspect_ratio
+  vertical_resolution: 1
+  horizontal_resolution: 1
+header:
+  frame_info:
+    width: 512
+    height: 512
+    bits_per_sample: 16
+    component_count: 1
+    near_lossless: 0
+  interleave_mode: none
+  preset_coding_parameters:
+    maximum_sample_value: 65535
+    threshold1: 18
+    threshold2: 67
+    threshold3: 276
+    reset_value: 64
+    color_transformation: none
+```
+
+# COPYRIGHT
+
+BSD-3-Clause

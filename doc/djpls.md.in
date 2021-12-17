@@ -1,0 +1,39 @@
+% DJPLS(1) djpls @JLST_VERSION@
+% Mathieu Malaterre
+% @JLST_DATE@
+
+# NAME
+
+djpls – Decompress JPEG-LS files
+
+# SYNOPSIS
+
+**djpls**␣*input.jls*␣*output.ext*
+
+# DESCRIPTION
+
+**djpls** Command line to decompress file from JPEG-LS specification (aka ITU 87).
+
+# OPTIONS
+
+**-h**, **--help**
+:   Display a friendly help message.
+
+**--version**
+:   Display the current version of charls-tools as well as the underlying charls version used.
+
+**-i**, **--input**
+:   Specify the input file(s) to read.
+
+**-o**, **--output**
+:   Specify the output file(s) to write.
+
+# EXAMPLES
+
+```
+$ djpls input.jls output.pgm
+```
+
+# COPYRIGHT
+
+BSD-3-Clause

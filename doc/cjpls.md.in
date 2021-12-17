@@ -1,0 +1,39 @@
+% CJPLS(1) cjpls @JLST_VERSION@
+% Mathieu Malaterre
+% @JLST_DATE@
+
+# NAME
+
+cjpls – Compress image file into JPEG-LS file
+
+# SYNOPSIS
+
+**cjpls**␣*input.ext*␣*output.jls*
+
+# DESCRIPTION
+
+**cjpls** Compress input image file into file using JPEG-LS specification (aka ITU 87).
+
+# OPTIONS
+
+**-h**, **--help**
+:   Display a friendly help message.
+
+**--version**
+:   Display the current version of charls-tools as well as the underlying charls version used.
+
+**-i**, **--input**
+:   Specify the input file(s) to read.
+
+**-o**, **--output**
+:   Specify the input file(s) to write.
+
+# EXAMPLES
+
+```
+$ cjpls input.pgm output.jls
+```
+
+# COPYRIGHT
+
+BSD-3-Clause
