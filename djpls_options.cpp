@@ -23,21 +23,24 @@ static charls::interleave_mode string_to_planar_configuration(const char* argume
 
 bool djpls_options::process(int argc, char* argv[])
 {
+    std::vector<std::string> inputs{};
+    std::vector<std::string> outputs{};
     namespace po = boost::program_options;
     std::string planar_configuration_str;
     {
         po::options_description desc("Allowed options");
-        desc.add_options()("help,h", "print usage message")                            // help
-            ("version", "print version")                                               // version
-            ("input,i", po::value(&input)->required(), "Input filename. Required.")    // input
-            ("output,o", po::value(&output)->required(), "Output filename. Required ") // output
+        desc.add_options()("help,h", "print usage message")                                  // help
+            ("version", "print version")                                                     // version
+            ("input,i", po::value(&inputs) /*->required()*/, "Input filename. Required.")    // input
+            ("output,o", po::value(&outputs) /*->required()*/, "Output filename. Required ") // output
             ("planar_configuration,p", po::value(&planar_configuration_str),
              "Planar configuration ('contig' or 'separate', unless specified in the format header.") // planar configuration
             ;
 
         po::positional_options_description p;
+        // do not allow more than one positional arg for now:
         p.add("input", 1);
-        p.add("output", 2);
+        p.add("output", 1);
         po::variables_map vm;
         po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
 
@@ -59,6 +62,23 @@ bool djpls_options::process(int argc, char* argv[])
         try
         {
             po::notify(vm);
+            if (vm.count("input"))
+            {
+                add_inputs(inputs);
+            }
+            else
+            {
+                add_stdin_input();
+            }
+
+            if (vm.count("output"))
+            {
+                add_outputs(outputs);
+            }
+            else
+            {
+                add_stdout_output();
+            }
         }
         catch (std::exception&)
         {

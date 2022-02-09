@@ -15,13 +15,16 @@ bool info_options::process(int argc, char* argv[])
     {
         po::options_description desc("Allowed options");
         std::string hash_name;
+        std::vector<std::string> inputs{};
+        std::vector<std::string> outputs{};
         // by default unix_style includes `allow_guessing`, so that user can use abbreviation:
-        desc.add_options()("help,h", "print usage message")                  // help
-            ("version", "print version")                                     // version
-            ("input,i", po::value(&inputs)->required(), "inputs. Required.") // input
-            ("format,f", po::value(&format), "format")                       // json/xml/yaml
-            ("pretty", "prettify output")                                    // pretty
-            ("hash", po::value(&hash_name), "use hash (eg. 'crc32')")        // compute hash of decoded buffer
+        desc.add_options()("help,h", "print usage message")                       // help
+            ("version", "print version")                                          // version
+            ("input,i", po::value(&inputs) /*->required()*/, "inputs. Required.") // input
+            ("output,o", po::value(&outputs) /*->required()*/, "outputs.")        // output
+            ("format,f", po::value(&format), "format")                            // json/xml/yaml
+            ("pretty", "prettify output")                                         // pretty
+            ("hash", po::value(&hash_name), "use hash (eg. 'crc32')")             // compute hash of decoded buffer
             ;
 
         po::positional_options_description p;
@@ -47,6 +50,24 @@ bool info_options::process(int argc, char* argv[])
         try
         {
             po::notify(vm);
+
+            if (vm.count("input"))
+            {
+                add_inputs(inputs);
+            }
+            else
+            {
+                add_stdin_input();
+            }
+
+            if (vm.count("output"))
+            {
+                add_outputs(outputs);
+            }
+            else
+            {
+                add_stdout_output(false);
+            }
         }
         catch (std::exception&)
         {

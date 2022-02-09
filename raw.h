@@ -10,14 +10,14 @@ class raw : public format
 {
 public:
     static format& get();
-    bool detect(cjpls_options const& options) override;
+    bool detect(source& s) override;
     bool detect2(djpls_options const& options) override;
-    void open(const char* filename, bool b) override;
-    void close() override;
-    void read_info() override;
-    void write_info() override;
-    void read_data(void* buffer, size_t len) override;
-    void write_data(void* buffer, size_t len) override;
+    //    void open(const char* filename, bool b) override;
+    //    void close() override;
+    void read_info(source& s) override;
+    void write_info(dest& d) override;
+    void read_data(source& s, void* buffer, size_t len) override;
+    void write_data(dest& d, const void* buffer, size_t len) override;
 
 private:
     std::ifstream ifs{};

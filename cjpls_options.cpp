@@ -3,10 +3,11 @@
 #include "cjpls_options.h"
 #include "tuple.h"
 
+//#include "source.h"
 #include "version.h"
 
 #include <boost/program_options.hpp>
-#include <iostream>
+#include <fstream>
 
 namespace jlst {
 
@@ -55,20 +56,22 @@ static charls::interleave_mode string_to_planar_configuration(const char* argume
 
 bool cjpls_options::process(int argc, char* argv[])
 {
+    std::vector<std::string> inputs{};
+    std::vector<std::string> outputs{};
     typedef tuple<int, 5> pcp_type;  // preset_coding_parameters
     typedef tuple<int, 2> size_type; // frame_info: width + height
     namespace po = boost::program_options;
-    std::string interleave_mode_str;
-    std::string color_transformation_str;
-    std::string planar_configuration_str;
+    std::string interleave_mode_str{};
+    std::string color_transformation_str{};
+    std::string planar_configuration_str{};
     pcp_type pcp{};
     size_type size{};
     {
         po::options_description desc("Allowed options");
-        desc.add_options()("help,h", "print usage message")                            // help
-            ("version", "print version")                                               // version
-            ("input,i", po::value(&input)->required(), "Input filename. Required.")    // input
-            ("output,o", po::value(&output)->required(), "Output filename. Required ") // output
+        desc.add_options()("help,h", "print usage message")                                  // help
+            ("version", "print version")                                                     // version
+            ("input,i", po::value(&inputs) /*->required()*/, "Input filename. Required.")    // input
+            ("output,o", po::value(&outputs) /*->required()*/, "Output filename. Required ") // output
             ("interleave_mode,m", po::value(&interleave_mode_str),
              "Output interleave mode: `none|line|samples`. "
              "Default to input format if not specified.")                         // interleave mode
@@ -91,8 +94,9 @@ bool cjpls_options::process(int argc, char* argv[])
             ;
 
         po::positional_options_description p;
+        // do not allow more than one positional arg for now:
         p.add("input", 1);
-        p.add("output", 2);
+        p.add("output", 1);
         po::variables_map vm;
         po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
 
@@ -114,6 +118,25 @@ bool cjpls_options::process(int argc, char* argv[])
         try
         {
             po::notify(vm);
+
+            // let's pretend that input/output are actually required:
+            if (vm.count("input"))
+            {
+                add_inputs(inputs);
+            }
+            else
+            {
+                add_stdin_input();
+            }
+
+            if (vm.count("output"))
+            {
+                add_outputs(outputs);
+            }
+            else
+            {
+                add_stdout_output();
+            }
         }
         catch (std::exception&)
         {
@@ -122,6 +145,7 @@ bool cjpls_options::process(int argc, char* argv[])
             std::cout << desc << std::endl;
             throw;
         }
+
         interleave_mode = charls::interleave_mode::none;
         color_transformation = charls::color_transformation::none;
         planar_configuration = charls::interleave_mode::sample;
@@ -156,4 +180,6 @@ bool cjpls_options::process(int argc, char* argv[])
     }
     return true;
 }
+
+
 } // namespace jlst

@@ -5,6 +5,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <cassert>
+
 namespace jlst {
 static raw::info compute_info(size_t const byte_count_file, cjpls_options const& options)
 {
@@ -43,12 +45,14 @@ static size_t compute_len(raw::info const& i)
     return len;
 }
 
-bool raw::detect(cjpls_options const& options)
+bool raw::detect(source& s)
 {
+#if 0
     info const inf = options.frame_info;
     if (inf.width == 0 || inf.height == 0)
         return false;
-    const char* filename = options.input.c_str();
+    assert(0);
+    const char* filename; // = options.input.c_str();
     std::ifstream tmp(filename, std::ios::binary);
     tmp.seekg(0, std::ios::end);
     const auto byte_count_file = static_cast<size_t>(tmp.tellg());
@@ -61,6 +65,8 @@ bool raw::detect(cjpls_options const& options)
     }
     stride_ = info_.width * (info_.bits_per_sample / 8) * info_.component_count;
     return byte_count_file == compute_len(info_);
+#endif
+    return true;
 }
 
 bool raw::detect2(djpls_options const&)
@@ -68,29 +74,30 @@ bool raw::detect2(djpls_options const&)
     return false;
 }
 
-void raw::open(const char* filename, bool b)
+// void raw::open(const char* filename, bool)
+//{
+//    ifs.open(filename, std::ios::binary);
+//}
+//
+// void raw::close()
+//{
+//    ifs.close();
+//}
+
+void raw::read_info(source& s)
 {
-    ifs.open(filename, std::ios::binary);
-}
-void raw::close()
-{
-    ifs.close();
 }
 
-void raw::read_info()
-{
-}
-
-void raw::read_data(void* buffer, size_t len)
+void raw::read_data(source& ifs, void* buffer, size_t len)
 {
     ifs.read(static_cast<char*>(buffer), len);
 }
 
-void raw::write_info()
+void raw::write_info(dest& d)
 {
 }
 
-void raw::write_data(void* buffer, size_t len)
+void raw::write_data(dest& d, const void* buffer, size_t len)
 {
     //    ifs.write(static_cast<char*>(buffer), len);
 }

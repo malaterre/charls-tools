@@ -8,22 +8,6 @@
 #include <sstream>
 #include <vector>
 
-static std::vector<uint8_t> read_file(std::string const& filename)
-{
-    std::ifstream input;
-    input.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
-    input.open(filename.c_str(), std::ios::in | std::ios::binary);
-
-    input.seekg(0, std::ios::end);
-    const auto byte_count_file = static_cast<size_t>(input.tellg());
-    input.seekg(0, std::ios::beg);
-
-    std::vector<uint8_t> buffer(byte_count_file);
-    input.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
-
-    return buffer;
-}
-
 struct writer
 {
     writer(bool pretty) : pretty_(pretty)
@@ -360,9 +344,8 @@ OSTREAMOP(color_transformation)
     writer.print_value(os, #K, S.K); \
     writer.print_value_separator(os, true);
 
-void print_spiff_header(writer& writer, charls::spiff_header const& spiff_header)
+void print_spiff_header(writer& writer, std::ostream& os, charls::spiff_header const& spiff_header)
 {
-    std::ostream& os = std::cout;
     const char header[] = "spiff_header";
     writer.print_header(os, header);
     PRINT(spiff_header, profile_id);          // P: Application profile, type I.8
@@ -379,9 +362,8 @@ void print_spiff_header(writer& writer, charls::spiff_header const& spiff_header
     writer.print_footer(os, header);
 }
 
-void print_preset_coding_parameters(writer& writer, charls::jpegls_decoder const& decoder)
+void print_preset_coding_parameters(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
 {
-    std::ostream& os = std::cout;
     const char header[] = "preset_coding_parameters";
     writer.print_header(os, header);
     const charls::jpegls_pc_parameters& pcp = decoder.preset_coding_parameters();
@@ -392,9 +374,8 @@ void print_preset_coding_parameters(writer& writer, charls::jpegls_decoder const
     PRINTONLY(pcp, reset_value);
     writer.print_footer(os, header);
 }
-void print_frame_info(writer& writer, charls::jpegls_decoder const& decoder)
+void print_frame_info(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
 {
-    std::ostream& os = std::cout;
     const char header[] = "frame_info";
     writer.print_header(os, header);
     const charls::frame_info& frame_info = decoder.frame_info();
@@ -404,12 +385,11 @@ void print_frame_info(writer& writer, charls::jpegls_decoder const& decoder)
     PRINTONLY(frame_info, component_count);
     writer.print_footer(os, header);
 }
-static void print_hash(writer& writer, charls::jpegls_decoder const& decoder)
+static void print_hash(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
 {
     std::vector<uint8_t> decoded_buffer(decoder.destination_size());
     decoder.decode(decoded_buffer);
-    std::string crc32 = get_crc32(decoded_buffer);
-    std::ostream& os = std::cout;
+    std::string crc32 = jlst::get_crc32(decoded_buffer);
     const char header[] = "hash";
     writer.print_header(os, header);
     writer.print_value(os, "crc32", crc32);
@@ -429,49 +409,51 @@ static void print_hash(writer& writer, charls::jpegls_decoder const& decoder)
     writer.print_value_separator(os, true);
 
 
-void print_header(writer& writer, charls::jpegls_decoder const& decoder)
+void print_header(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
 {
-    std::ostream& os = std::cout;
     const char header[] = "header";
     writer.print_header(os, header);
-    print_frame_info(writer, decoder);
-    writer.print_value_separator(std::cout, false);
+    print_frame_info(writer, os, decoder);
+    writer.print_value_separator(os, false);
     PRINTFUN(decoder, near_lossless);
     PRINTFUN(decoder, interleave_mode);
-    print_preset_coding_parameters(writer, decoder);
-    writer.print_value_separator(std::cout, false);
+    print_preset_coding_parameters(writer, os, decoder);
+    writer.print_value_separator(os, false);
     PRINTFUNONLY(decoder, color_transformation);
     writer.print_footer(os, header);
 }
 #undef PRINTFUN
 
-static void dump(writer& writer, std::string const& filename, bool with_hash)
+static void dump(writer& writer, jlst::source& source, jlst::dest& dest, bool with_hash)
 {
-    const std::vector<uint8_t> encoded_source = read_file(filename);
+    const std::vector<uint8_t> encoded_source = source.read_bytes();
 
     charls::jpegls_decoder decoder;
     decoder.source(encoded_source);
     // start decoding to check any exception:
     decoder.read_spiff_header();
 
-    writer.print_header(std::cout, "");
+    std::ostringstream os;
+    writer.print_header(os, "");
     if (decoder.spiff_header_has_value())
     {
-        print_spiff_header(writer, decoder.spiff_header());
-        writer.print_value_separator(std::cout, false);
+        print_spiff_header(writer, os, decoder.spiff_header());
+        writer.print_value_separator(os, false);
     }
     decoder.read_header();
-    print_header(writer, decoder);
+    print_header(writer, os, decoder);
 
     if (with_hash)
     {
-        writer.print_value_separator(std::cout, false);
-        print_hash(writer, decoder);
+        writer.print_value_separator(os, false);
+        print_hash(writer, os, decoder);
     }
-    writer.print_value_separator(std::cout, true);
+    writer.print_value_separator(os, true);
 
-    writer.print_footer(std::cout, "");
-    std::cout << std::endl;
+    writer.print_footer(os, "");
+    os << std::endl;
+    std::string s = os.str();
+    dest.write(s.c_str(), s.size());
 }
 
 int main(int argc, char* argv[])
@@ -498,25 +480,33 @@ int main(int argc, char* argv[])
 
     try
     {
-        const bool multiple = options.inputs.size() > 1;
-        for (auto& filename : options.inputs)
+        auto& sources = options.get_sources();
+        auto& dest = options.get_dest(0);
+        const bool multiple = sources.size() /*options.inputs.size()*/ > 1;
+        for (auto& source : sources)
         {
-            if (multiple)
-                std::cout << filename << ":" << std::endl;
+            auto& filename = source.get_filename();
+            {
+                std::ostringstream os;
+                if (multiple)
+                    os << filename << ":" << std::endl;
+                std::string s = os.str();
+                dest.write(s.c_str(), s.size());
+            }
             if (options.format == "yaml")
             {
                 yaml_writer writer(options.pretty);
-                dump(writer, filename, options.with_hash);
+                dump(writer, source, dest, options.with_hash);
             }
             else if (options.format == "json")
             {
                 json_writer writer(options.pretty);
-                dump(writer, filename, options.with_hash);
+                dump(writer, source, dest, options.with_hash);
             }
             else if (options.format == "xml")
             {
                 xml_writer writer(options.pretty);
-                dump(writer, filename, options.with_hash);
+                dump(writer, source, dest, options.with_hash);
             }
         }
     }

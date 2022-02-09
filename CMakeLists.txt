@@ -77,6 +77,12 @@ add_subdirectory(doc)
 
 find_package(charls REQUIRED)
 find_package(Boost 1.53 REQUIRED COMPONENTS program_options)
+
+include(CheckSymbolExists)
+check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
+
+set_property(SOURCE options.cpp PROPERTY COMPILE_DEFINITIONS HAVE_ISATTY)
+
 foreach(exe cjpls djpls jplsinfo)
   add_executable(
     ${exe}
@@ -86,6 +92,9 @@ foreach(exe cjpls djpls jplsinfo)
     pnm.cpp
     utils.cpp
     image.cpp
+    source.cpp
+    options.cpp
+    dest.cpp
     crc32.cpp)
   target_compile_options(
     ${exe}

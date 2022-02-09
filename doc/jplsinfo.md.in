@@ -25,11 +25,17 @@ jplsinfo – print information about JPEG-LS files
 **-i**, **--input**
 :   Specify the input file(s) to read.
 
+**-o**, **--output**
+:   Specify the output file(s) to write.
+
 **-f**, **--format**
 :   Specify the output format to use (json/xml/yaml).
 
 **--pretty**
 :   Prettify the output for each format (if supported)
+
+**--hash**
+:   Use hash (eg. 'crc32')
 
 # EXAMPLES
 

@@ -64,3 +64,6 @@ if(CHARLS_ROOT)
                      ${CHARLS_ROOT}/test/jlsimage/${banny}.jls)
   endforeach()
 endif()
+
+add_executable(test_source test_source.cxx ../source.cpp)
+target_include_directories(test_source PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)

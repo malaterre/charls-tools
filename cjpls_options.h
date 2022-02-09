@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 #pragma once
 
+#include "options.h"
+
 #include <charls/charls.h>
-#include <string>
 
 namespace jlst {
-struct cjpls_options final
+struct cjpls_options final : options
 {
-    std::string input{};
-    std::string output{};
     charls::frame_info frame_info{};
     charls::interleave_mode interleave_mode{};
     int near_lossless{};

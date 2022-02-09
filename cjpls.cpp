@@ -16,11 +16,10 @@
 
 #include "cjpls_options.h"
 
-jlst::image load_image(jlst::format& format, const jlst::cjpls_options& options)
+jlst::image load_image(jlst::format& format, jlst::cjpls_options& options)
 {
     jlst::image input_image{};
-    format.open(options.input.c_str(), false);
-    format.read_info();
+    format.read_info(options.get_source(0));
     input_image.frame_info() = format.get_info();
     input_image.interleave_mode() = format.get_mode();
     input_image.stride() = format.get_stride();
@@ -28,7 +27,7 @@ jlst::image load_image(jlst::format& format, const jlst::cjpls_options& options)
     auto& pixel_data = input_image.pixel_data();
     auto const bytes_per_sample{(info.bits_per_sample + 7) / 8};
     pixel_data.resize(info.width * info.height * bytes_per_sample * info.component_count);
-    format.read_data(pixel_data.data(), pixel_data.size());
+    format.read_data(options.get_source(0), pixel_data.data(), pixel_data.size());
 
     return input_image;
 }
@@ -82,14 +81,14 @@ std::vector<uint8_t> compress(jlst::image const& image, const jlst::cjpls_option
     return buffer;
 }
 
-static jlst::format& get_format(const jlst::cjpls_options& options)
+static jlst::format& get_format(jlst::cjpls_options& options)
 {
     using refformat = std::reference_wrapper<jlst::format>;
     static const refformat formats[] = {jlst::pnm::get(), jlst::raw::get()};
 
     for (jlst::format& format : formats)
     {
-        if (format.detect(options))
+        if (format.detect(options.get_source(0)))
         {
             return format;
         }
@@ -97,14 +96,13 @@ static jlst::format& get_format(const jlst::cjpls_options& options)
     throw std::invalid_argument("no format");
 }
 
-static void encode(const jlst::cjpls_options& options)
+static void encode(jlst::cjpls_options& options)
 {
     jlst::format& format = get_format(options);
 
     auto image{load_image(format, options)};
     auto encoded_buffer{compress(image, options)};
-    jlst::utils::save_buffer_to_file(encoded_buffer.data(), encoded_buffer.size(), options.output.c_str());
-    format.close();
+    options.get_dest(0).write(encoded_buffer.data(), encoded_buffer.size());
 }
 
 int main(int argc, char* argv[])

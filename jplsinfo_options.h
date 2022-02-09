@@ -2,16 +2,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 #pragma once
 
-#include <string>
-#include <vector>
+#include "options.h"
 
 namespace jlst {
-struct info_options final
+struct info_options final : options
 {
     info_options() : format("json")
     {
     }
-    std::vector<std::string> inputs{};
     std::string format{};
     bool pretty{};
     bool with_hash{};

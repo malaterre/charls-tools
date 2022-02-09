@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include "dest.h"
+
 #include <cstring> // std::memcpy
 namespace jlst {
 
@@ -91,18 +93,6 @@ std::vector<uint8_t> utils::planar_to_triplet(const std::vector<uint8_t>& buffer
         std::memcpy(ret.data(), tmp.data(), buffer.size());
         return ret;
     }
-}
-
-void utils::save_buffer_to_file(const void* buffer, const size_t buffer_size, const char* filename)
-{
-    assert(filename);
-    assert(buffer);
-    assert(buffer_size);
-
-    std::ofstream output(filename, std::ios::binary);
-    output.exceptions(std::ios::failbit | std::ios::badbit);
-
-    output.write(static_cast<const char*>(buffer), static_cast<std::streamsize>(buffer_size));
 }
 
 } // namespace jlst
