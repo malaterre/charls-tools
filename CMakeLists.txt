@@ -90,6 +90,7 @@ foreach(exe cjpls djpls jplsinfo)
     ${exe}_options.cpp
     raw.cpp
     pnm.cpp
+    jls.cpp
     utils.cpp
     image.cpp
     source.cpp
