@@ -9,15 +9,14 @@ namespace jlst {
 class pnm : public format
 {
 public:
-    static format& get();
+    static const format& get();
     // bool detect(cjpls_options const& options) override;
-    bool detect(source& s) override;
-    bool detect2(djpls_options const& options) override;
-    //    void open(const char* filename, bool b) override;
-    //    void close() override;
-    void read_info(source& s) override;
-    void write_info(dest& d) override;
-    void read_data(source& s, void* buffer, size_t len) override;
-    void write_data(dest& d, const void* buffer, size_t len) override;
+    bool detect(source& s) const override;
+    bool detect2(djpls_options const& options) const override;
+
+    void read_info(source& s, image& i) const override;
+    void write_info(dest& d, const image& i) const override;
+    void read_data(source& s, image& i) const override;
+    void write_data(dest& d, const image& i) const override;
 };
 } // namespace jlst

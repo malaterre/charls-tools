@@ -1,6 +1,7 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "djpls_options.h"
+#include "image.h"
 #include "pnm.h"
 #include "raw.h"
 
@@ -8,12 +9,12 @@
 #include <iostream>
 #include <vector>
 
-static jlst::format& get_format(jlst::djpls_options& options)
+static const jlst::format& get_format(jlst::djpls_options& options)
 {
-    using refformat = std::reference_wrapper<jlst::format>;
+    using refformat = std::reference_wrapper<const jlst::format>;
     static const refformat formats[] = {jlst::pnm::get(), jlst::raw::get()};
 
-    for (jlst::format& format : formats)
+    for (const jlst::format& format : formats)
     {
         if (format.detect2(options))
         {
@@ -25,7 +26,7 @@ static jlst::format& get_format(jlst::djpls_options& options)
 
 static void decode(jlst::djpls_options& options)
 {
-    jlst::format& format = get_format(options);
+    const jlst::format& format = get_format(options);
 
     const std::vector<uint8_t> encoded_source = options.get_source(0).read_bytes();
     charls::jpegls_decoder decoder;
@@ -37,12 +38,13 @@ static void decode(jlst::djpls_options& options)
     decoder.decode(decoded_buffer);
 
 #if 1
-    //    format.open(options.output.c_str(), true);
-    format.get_info() = decoder.frame_info();
-    format.get_mode() = decoder.interleave_mode();
-    format.get_stride() = 0; // FIXME ?
-    format.write_info(options.get_dest(0));
-    format.write_data(options.get_dest(0), decoded_buffer.data(), decoded_buffer.size());
+    jlst::image input_image;
+    input_image.get_image_info().frame_info() = decoder.frame_info();
+    input_image.get_image_info().interleave_mode() = decoder.interleave_mode();
+    // format.get_stride() = 0; // FIXME ?
+    format.write_info(options.get_dest(0), input_image);
+    input_image.get_image_data().pixel_data() = decoded_buffer;
+    format.write_data(options.get_dest(0), input_image);
 #else
     std::ofstream output(options.output.c_str(), std::ios::binary);
     output.exceptions(std::ios::failbit | std::ios::badbit);

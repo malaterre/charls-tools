@@ -8,6 +8,7 @@
 #include <cassert>
 
 namespace jlst {
+#if 0
 static raw::info compute_info(size_t const byte_count_file, cjpls_options const& options)
 {
     auto i = options.frame_info;
@@ -29,8 +30,9 @@ static raw::info compute_info(size_t const byte_count_file, cjpls_options const&
 
     return i;
 }
+#endif
 
-static size_t compute_len(raw::info const& i)
+static size_t compute_len(charls::frame_info const& i)
 {
     size_t bits_per_sample = 0;
     if (i.bits_per_sample <= 8)
@@ -45,7 +47,7 @@ static size_t compute_len(raw::info const& i)
     return len;
 }
 
-bool raw::detect(source& s)
+bool raw::detect(source& s) const
 {
 #if 0
     info const inf = options.frame_info;
@@ -69,42 +71,32 @@ bool raw::detect(source& s)
     return true;
 }
 
-bool raw::detect2(djpls_options const&)
+bool raw::detect2(djpls_options const&) const
 {
     return false;
 }
 
-// void raw::open(const char* filename, bool)
-//{
-//    ifs.open(filename, std::ios::binary);
-//}
-//
-// void raw::close()
-//{
-//    ifs.close();
-//}
-
-void raw::read_info(source& s)
+void raw::read_info(source& s, image& i) const
 {
 }
 
-void raw::read_data(source& ifs, void* buffer, size_t len)
+void raw::read_data(source& ifs, image& i) const
 {
-    ifs.read(static_cast<char*>(buffer), len);
+    //    ifs.read(static_cast<char*>(buffer), len);
 }
 
-void raw::write_info(dest& d)
+void raw::write_info(dest& d, const image& i) const
 {
 }
 
-void raw::write_data(dest& d, const void* buffer, size_t len)
+void raw::write_data(dest& d, const image& i) const
 {
     //    ifs.write(static_cast<char*>(buffer), len);
 }
 
-format& raw::get()
+const format& raw::get()
 {
-    static raw raw1;
-    return raw1;
+    static const raw raw_;
+    return raw_;
 }
 } // namespace jlst

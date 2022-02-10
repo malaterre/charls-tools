@@ -1,6 +1,7 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "pnm.h"
+#include "image.h"
 #include "utils.h"
 
 #include <fstream>
@@ -9,6 +10,17 @@
 #include <vector>
 
 namespace jlst {
+bool pnm::detect(source& s) const
+{
+    const int c = s.peek();
+    return c == 'P';
+}
+bool pnm::detect2(const djpls_options&) const
+{
+    return true;
+}
+
+namespace {
 // Return 12 for input `4095`
 constexpr std::uint32_t log2(const std::uint32_t n) noexcept
 {
@@ -19,39 +31,7 @@ constexpr std::uint32_t log2(const std::uint32_t n) noexcept
     }
     return x;
 }
-// bool pnm::detect(const cjpls_options& options)
-bool pnm::detect(source& s)
-{
-#if 0
-    assert(0);
-    const char* filename; // = options.input.c_str();
-    std::ifstream tmp(filename, std::ios::binary);
-    std::string str;
-    tmp >> str;
-    return str[0] == 'P';
-#else
-    int c = s.peek();
-    return c == 'P';
-#endif
-}
-bool pnm::detect2(const djpls_options&)
-{
-    return true;
-}
-
-// void pnm::open(const char* filename, bool b)
-//{
-//    if (b)
-//        fs.open(filename, std::ios::binary | std::ios::out);
-//    else
-//        fs.open(filename, std::ios::binary | std::ios::in);
-//}
-// void pnm::close()
-//{
-//    fs.close();
-//}
-
-static std::string& pnm_trim_comment(std::string& s)
+static std::string& pnm_trim_comment(std::string& s) noexcept
 {
     s.erase(s.begin()); // remove leading '#'
     while (s.compare(0, 1, " ") == 0)
@@ -60,9 +40,11 @@ static std::string& pnm_trim_comment(std::string& s)
         s.erase(s.end() - 1); // trailing whitespaces
     return s;
 }
+} // namespace
 
-void pnm::read_info(source& fs)
+void pnm::read_info(source& fs, image& i) const
 {
+    auto& ii = i.get_image_info();
     std::string str;
     str = fs.getline();
     if (str != "P5" && str != "P6")
@@ -72,15 +54,16 @@ void pnm::read_info(source& fs)
     // component count:
     if (str[1] == '5')
     {
-        mode_ = mode::none;
-        info_.component_count = 1;
+        ii.frame_info().component_count = 1;
+        ii.interleave_mode() = charls::interleave_mode::none;
     }
     else if (str[1] == '6')
     {
-        mode_ = mode::sample;
-        info_.component_count = 3;
+        ii.frame_info().component_count = 3;
+        ii.interleave_mode() = charls::interleave_mode::sample;
     }
-    // skip comment
+    // comment
+    std::string comment;
     while (fs.peek() == '#')
     {
         str = fs.getline();
@@ -88,43 +71,48 @@ void pnm::read_info(source& fs)
             comment += "\n";
         comment += pnm_trim_comment(str);
     }
+    ii.comment() = comment;
     // width / height:
     str = fs.getline();
     {
         std::stringstream ss(str);
-        int w;
-        int h;
+        long long w;
+        long long h;
         ss >> w;
-        if (w <= 0)
+        if (w <= 0 || w >= std::numeric_limits<uint32_t>::max())
             throw std::invalid_argument(str);
         ss >> h;
-        if (h <= 0)
+        if (h <= 0 || h >= std::numeric_limits<uint32_t>::max())
             throw std::invalid_argument(str);
 
-        info_.width = w;
-        info_.height = h;
+        ii.frame_info().width = w;
+        ii.frame_info().height = h;
     }
     // bits per sample:
     str = fs.getline();
     {
         std::stringstream ss(str);
-        long long i;
-        ss >> i;
-        if (i <= 0 || i >= std::numeric_limits<uint32_t>::max())
+        long long bps;
+        ss >> bps;
+        if (bps <= 0 || bps >= std::numeric_limits<uint32_t>::max())
             throw std::invalid_argument(str);
 
-        info_.bits_per_sample = log2(i);
+        ii.frame_info().bits_per_sample = log2(bps);
     }
     // now is a good time to compute stride:
-    auto const bytes_per_sample{(info_.bits_per_sample + 7) / 8};
-    stride_ = info_.width * bytes_per_sample * info_.component_count;
+    auto const bytes_per_sample{(ii.frame_info().bits_per_sample + 7) / 8};
+    i.get_image_data().stride() = ii.frame_info().width * bytes_per_sample * ii.frame_info().component_count;
 }
 
-void pnm::read_data(source& fs, void* buffer, size_t len)
+void pnm::read_data(source& fs, image& i) const
 {
-    char* buf8 = static_cast<char*>(buffer);
+    auto& id = i.get_image_data();
+    auto& pd = id.pixel_data();
+    uint8_t* buf8 = pd.data();
+    auto len = pd.size();
     fs.read(buf8, len);
-    if (info_.bits_per_sample > 8)
+    auto& ii = i.get_image_info();
+    if (ii.frame_info().bits_per_sample > 8)
     {
         for (size_t i{}; i < len - 1; i += 2)
         {
@@ -133,35 +121,39 @@ void pnm::read_data(source& fs, void* buffer, size_t len)
     }
 }
 
-void pnm::write_info(dest& d)
+void pnm::write_info(dest& d, const image& i) const
 {
     std::stringstream fs;
-    if (info_.component_count == 1)
+    auto& ii = i.get_image_info();
+    if (ii.frame_info().component_count == 1)
         fs << "P5\n";
     else
         fs << "P6\n";
-    fs << info_.width << " " << info_.height << '\n';
-    fs << ((1 << info_.bits_per_sample) - 1) << '\n';
-    std::string s = fs.str();
+    fs << ii.frame_info().width << " " << ii.frame_info().height << '\n';
+    fs << ((1 << ii.frame_info().bits_per_sample) - 1) << '\n';
+    const std::string s = fs.str();
     d.write(s.c_str(), s.size());
 }
 
-void pnm::write_data(dest& fs, const void* buffer, size_t len)
+void pnm::write_data(dest& fs, const image& i) const
 {
-    const unsigned char* cbuffer = static_cast<const unsigned char*>(buffer);
-    std::vector<unsigned char> buf8;
-    buf8.assign(cbuffer, cbuffer + len);
-    const size_t stride = info_.width * (info_.bits_per_sample / 8) * info_.component_count;
-    if (info_.component_count == 3)
+    auto& ii = i.get_image_info();
+    auto& id = i.get_image_data();
+    auto& pd = id.pixel_data();
+
+    auto len = pd.size();
+    std::vector<unsigned char> buf8(pd);
+    const size_t stride = ii.frame_info().width * (ii.frame_info().bits_per_sample / 8) * ii.frame_info().component_count;
+    if (ii.frame_info().component_count == 3)
     {
-        if (mode_ == charls::interleave_mode::none)
+        if (ii.interleave_mode() == charls::interleave_mode::none)
         {
-            std::vector<unsigned char> copy =
-                utils::planar_to_triplet(buf8, info_.width, info_.height, info_.bits_per_sample, stride);
+            std::vector<unsigned char> copy = utils::planar_to_triplet(buf8, ii.frame_info().width, ii.frame_info().height,
+                                                                       ii.frame_info().bits_per_sample, stride);
             buf8.assign(copy.begin(), copy.end());
         }
     }
-    if (info_.bits_per_sample > 8)
+    if (ii.frame_info().bits_per_sample > 8)
     {
         for (size_t i{}; i < len - 1; i += 2)
         {
@@ -171,9 +163,9 @@ void pnm::write_data(dest& fs, const void* buffer, size_t len)
     fs.write(reinterpret_cast<char*>(buf8.data()), buf8.size());
 }
 
-format& pnm::get()
+const format& pnm::get()
 {
-    static pnm pnm_;
+    static const pnm pnm_;
     return pnm_;
 }
 } // namespace jlst

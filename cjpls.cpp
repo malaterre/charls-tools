@@ -16,25 +16,16 @@
 
 #include "cjpls_options.h"
 
-jlst::image load_image(jlst::format& format, jlst::cjpls_options& options)
+static jlst::image load_image(const jlst::format& format, jlst::source& source)
 {
     jlst::image input_image{};
-    format.read_info(options.get_source(0));
-    input_image.frame_info() = format.get_info();
-    input_image.interleave_mode() = format.get_mode();
-    input_image.stride() = format.get_stride();
-    auto const& info = input_image.frame_info();
-    auto& pixel_data = input_image.pixel_data();
-    auto const bytes_per_sample{(info.bits_per_sample + 7) / 8};
-    pixel_data.resize(info.width * info.height * bytes_per_sample * info.component_count);
-    format.read_data(options.get_source(0), pixel_data.data(), pixel_data.size());
-
+    input_image.load(format, source);
     return input_image;
 }
 
-std::vector<uint8_t> compress(jlst::image const& image, const jlst::cjpls_options& options)
+static std::vector<uint8_t> compress(jlst::image const& image, const jlst::cjpls_options& options)
 {
-    auto const& frame_info = image.frame_info();
+    auto const& frame_info = image.get_image_info().frame_info();
     // what if user requested 'line' or 'sample' for single component ? Let's
     // handle it here (not sure why charls does not handle it internally).
     if (frame_info.component_count == 1)
@@ -74,21 +65,21 @@ std::vector<uint8_t> compress(jlst::image const& image, const jlst::cjpls_option
     }
     else
     {
-        encoded_size = encoder.encode(transform_pixel_data, image.stride());
+        encoded_size = encoder.encode(transform_pixel_data, image.get_image_data().stride());
     }
     buffer.resize(encoded_size);
 
     return buffer;
 }
 
-static jlst::format& get_format(jlst::cjpls_options& options)
+static const jlst::format& get_format(const jlst::cjpls_options& options, jlst::source& source)
 {
-    using refformat = std::reference_wrapper<jlst::format>;
-    static const refformat formats[] = {jlst::pnm::get(), jlst::raw::get()};
+    using refformat = std::reference_wrapper<const jlst::format>;
+    static refformat formats[] = {jlst::pnm::get(), jlst::raw::get()};
 
-    for (jlst::format& format : formats)
+    for (const jlst::format& format : formats)
     {
-        if (format.detect(options.get_source(0)))
+        if (format.detect(source))
         {
             return format;
         }
@@ -96,11 +87,31 @@ static jlst::format& get_format(jlst::cjpls_options& options)
     throw std::invalid_argument("no format");
 }
 
+static jlst::image combine_images(std::vector<jlst::image> const& images)
+{
+    if (images.size() == 1)
+        return images[0];
+    else if (images.size() == 3)
+    {
+        throw std::invalid_argument("todo");
+    }
+
+    throw std::invalid_argument("combine_images");
+}
+
 static void encode(jlst::cjpls_options& options)
 {
-    jlst::format& format = get_format(options);
+    auto& sources = options.get_sources();
+    std::vector<jlst::image> images;
+    for (auto& source : sources)
+    {
+        const jlst::format& format = get_format(options, source);
+        auto image{load_image(format, source)};
+        images.push_back(image);
+    }
 
-    auto image{load_image(format, options)};
+    auto image{combine_images(images)};
+
     auto encoded_buffer{compress(image, options)};
     options.get_dest(0).write(encoded_buffer.data(), encoded_buffer.size());
 }
