@@ -58,11 +58,11 @@ static std::vector<T> planar_to_triplet_impl(const std::vector<T>& buffer, const
 std::vector<uint8_t> utils::triplet_to_planar(const std::vector<uint8_t>& buffer, const uint16_t width,
                                               const uint16_t height, const uint8_t bits_per_sample, const size_t stride)
 {
-    if (bits_per_sample == 8)
+    if (bits_per_sample <= 8)
     {
         return triplet_to_planar_impl(buffer, width, height, stride);
     }
-    else
+    else if (bits_per_sample <= 16)
     {
         std::vector<uint16_t> buffer16;
         buffer16.resize(buffer.size() / 2);
@@ -73,16 +73,17 @@ std::vector<uint8_t> utils::triplet_to_planar(const std::vector<uint8_t>& buffer
         std::memcpy(ret.data(), tmp.data(), buffer.size());
         return ret;
     }
+    throw std::invalid_argument("triplet_to_planar");
 }
 
 std::vector<uint8_t> utils::planar_to_triplet(const std::vector<uint8_t>& buffer, const uint16_t width,
                                               const uint16_t height, const uint8_t bits_per_sample, const size_t stride)
 {
-    if (bits_per_sample == 8)
+    if (bits_per_sample <= 8)
     {
         return planar_to_triplet_impl(buffer, width, height, stride);
     }
-    else
+    else if (bits_per_sample <= 16)
     {
         std::vector<uint16_t> buffer16;
         buffer16.resize(buffer.size() / 2);
@@ -93,6 +94,7 @@ std::vector<uint8_t> utils::planar_to_triplet(const std::vector<uint8_t>& buffer
         std::memcpy(ret.data(), tmp.data(), buffer.size());
         return ret;
     }
+    throw std::invalid_argument("planar_to_triplet");
 }
 
 } // namespace jlst

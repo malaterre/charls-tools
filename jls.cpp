@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace jlst {
-bool jls::detect(source& s) const
+bool jls::detect(image_info const& ii, source& s) const
 {
     const int c = s.peek();
     return c == 'P';

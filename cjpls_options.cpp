@@ -60,13 +60,15 @@ bool cjpls_options::process(int argc, char* argv[])
     std::vector<std::string> outputs{};
     typedef tuple<int, 5> pcp_type;  // preset_coding_parameters
     typedef tuple<int, 2> size_type; // frame_info: width + height
-    namespace po = boost::program_options;
     std::string interleave_mode_str{};
     std::string color_transformation_str{};
     std::string planar_configuration_str{};
     pcp_type pcp{};
     size_type size{};
+    auto& frame_info = image_info_.frame_info();
+    auto& planar_configuration = image_info_.interleave_mode();
     {
+        namespace po = boost::program_options;
         po::options_description desc("Allowed options");
         desc.add_options()("help,h", "print usage message")                                  // help
             ("version", "print version")                                                     // version

@@ -11,7 +11,7 @@ class jls : public format
 public:
     static const format& get();
     // bool detect(cjpls_options const& options) override;
-    bool detect(source& s) const override;
+    bool detect(image_info const& ii, source& s) const override;
     bool detect2(djpls_options const& options) const override;
 
     void read_info(source& s, image& i) const override;

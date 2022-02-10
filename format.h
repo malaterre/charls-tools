@@ -15,7 +15,7 @@ class format
 public:
     virtual ~format(){};
     // virtual bool detect(cjpls_options const& options) = 0;
-    virtual bool detect(source& s) const = 0;
+    virtual bool detect(image_info const& ii, source& s) const = 0;
     virtual bool detect2(djpls_options const& options) const = 0;
 
     virtual void read_info(source& s, image& i) const = 0;

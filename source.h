@@ -19,6 +19,7 @@ public:
     void rewind();
     size_t read(void* ptr, size_t n);
     std::string getline();
+    size_t size();
 
     const std::string& get_filename() const
     {

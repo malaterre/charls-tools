@@ -16,13 +16,6 @@
 
 #include "cjpls_options.h"
 
-static jlst::image load_image(const jlst::format& format, jlst::source& source)
-{
-    jlst::image input_image{};
-    input_image.load(format, source);
-    return input_image;
-}
-
 static std::vector<uint8_t> compress(jlst::image const& image, const jlst::cjpls_options& options)
 {
     auto const& frame_info = image.get_image_info().frame_info();
@@ -79,7 +72,7 @@ static const jlst::format& get_format(const jlst::cjpls_options& options, jlst::
 
     for (const jlst::format& format : formats)
     {
-        if (format.detect(source))
+        if (format.detect(options.get_image_info(), source))
         {
             return format;
         }
@@ -106,14 +99,24 @@ static void encode(jlst::cjpls_options& options)
     for (auto& source : sources)
     {
         const jlst::format& format = get_format(options, source);
-        auto image{load_image(format, source)};
-        images.push_back(image);
+        jlst::image input_image{};
+        // raw codec is a bit special, since header info is specifed by the
+        // user on the command line. We must initialize the default image info
+        // here, all other codec, will simply override user defaults
+        input_image.get_image_info() = options.get_image_info();
+        input_image.load(format, source);
+        images.push_back(input_image);
     }
 
     auto image{combine_images(images)};
 
+#if 0
+    auto& pd = image.get_image_data().pixel_data();
+    options.get_dest(0).write(pd.data(), pd.size());
+#else
     auto encoded_buffer{compress(image, options)};
     options.get_dest(0).write(encoded_buffer.data(), encoded_buffer.size());
+#endif
 }
 
 int main(int argc, char* argv[])

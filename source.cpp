@@ -5,8 +5,8 @@
 
 #include <stdexcept>
 
+#include <cassert>
 #include <cstring>
-
 
 namespace jlst {
 
@@ -16,7 +16,7 @@ source::source() : stream_(stdin)
 
 source::source(std::string const& filename)
 {
-    stream_ = fopen(filename.c_str(), "rb");
+    stream_ = std::fopen(filename.c_str(), "rb");
     if (!stream_)
         throw std::invalid_argument("bogus filename");
     filename_ = filename;
@@ -25,15 +25,13 @@ source::source(std::string const& filename)
 source::~source()
 {
     if (!filename_.empty())
-        fclose(stream_);
+        std::fclose(stream_);
 }
 
 int source::peek()
 {
-    int c;
-
-    c = fgetc(stream_);
-    ungetc(c, stream_);
+    const int c = std::fgetc(stream_);
+    std::ungetc(c, stream_);
 
     return c;
 }
@@ -45,14 +43,16 @@ void source::rewind()
 
 size_t source::read(void* ptr, size_t n)
 {
-    return std::fread(ptr, 1, n, stream_);
+    const size_t nr = std::fread(ptr, 1, n, stream_);
+    assert(n == nr);
+    return nr;
 }
 
 std::string source::getline()
 {
     char line[256];
     std::fgets(line, sizeof(line), stream_);
-    size_t len = strlen(line);
+    size_t len = std::strlen(line);
     if (len > 0 && line[len - 1] == '\n')
     {
         line[--len] = '\0';
@@ -60,12 +60,18 @@ std::string source::getline()
     return line;
 }
 
+size_t source::size()
+{
+    std::fseek(stream_, 0, SEEK_END);
+    const size_t byte_count_file = std::ftell(stream_);
+    rewind();
+    return byte_count_file;
+}
+
 std::vector<uint8_t> source::read_bytes()
 {
-    fseek(stream_, 0, SEEK_END);
-    size_t byte_count_file = ftell(stream_);
-    rewind();
-    std::vector<uint8_t> buffer(byte_count_file);
+    assert(std::ftell(stream_) == 0);
+    std::vector<uint8_t> buffer(size());
     read(buffer.data(), buffer.size());
     return buffer;
 }

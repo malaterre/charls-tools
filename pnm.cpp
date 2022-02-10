@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace jlst {
-bool pnm::detect(source& s) const
+bool pnm::detect(image_info const& ii, source& s) const
 {
     const int c = s.peek();
     return c == 'P';
@@ -143,7 +143,8 @@ void pnm::write_data(dest& fs, const image& i) const
 
     auto len = pd.size();
     std::vector<unsigned char> buf8(pd);
-    const size_t stride = ii.frame_info().width * (ii.frame_info().bits_per_sample / 8) * ii.frame_info().component_count;
+    auto const bytes_per_sample{(ii.frame_info().bits_per_sample + 7) / 8};
+    const size_t stride = ii.frame_info().width * bytes_per_sample * ii.frame_info().component_count;
     if (ii.frame_info().component_count == 3)
     {
         if (ii.interleave_mode() == charls::interleave_mode::none)
