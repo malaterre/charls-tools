@@ -424,36 +424,45 @@ void print_header(writer& writer, std::ostream& os, charls::jpegls_decoder const
 }
 #undef PRINTFUN
 
-static void dump(writer& writer, jlst::source& source, jlst::dest& dest, bool with_hash)
+static bool dump(writer& writer, jlst::source& source, jlst::dest& dest, bool with_hash)
 {
-    const std::vector<uint8_t> encoded_source = source.read_bytes();
-
-    charls::jpegls_decoder decoder;
-    decoder.source(encoded_source);
-    // start decoding to check any exception:
-    decoder.read_spiff_header();
-
-    std::ostringstream os;
-    writer.print_header(os, "");
-    if (decoder.spiff_header_has_value())
+    try
     {
-        print_spiff_header(writer, os, decoder.spiff_header());
-        writer.print_value_separator(os, false);
-    }
-    decoder.read_header();
-    print_header(writer, os, decoder);
+        const std::vector<uint8_t> encoded_source = source.read_bytes();
 
-    if (with_hash)
+        charls::jpegls_decoder decoder;
+        decoder.source(encoded_source);
+        // start decoding to check any exception:
+        decoder.read_spiff_header();
+
+        std::ostringstream os;
+        writer.print_header(os, "");
+        if (decoder.spiff_header_has_value())
+        {
+            print_spiff_header(writer, os, decoder.spiff_header());
+            writer.print_value_separator(os, false);
+        }
+        decoder.read_header();
+        print_header(writer, os, decoder);
+
+        if (with_hash)
+        {
+            writer.print_value_separator(os, false);
+            print_hash(writer, os, decoder);
+        }
+        writer.print_value_separator(os, true);
+
+        writer.print_footer(os, "");
+        os << std::endl;
+        std::string s = os.str();
+        dest.write(s.c_str(), s.size());
+    }
+    catch (std::exception& e)
     {
-        writer.print_value_separator(os, false);
-        print_hash(writer, os, decoder);
+        std::cerr << "Failure during dump: " << e.what() << std::endl;
+        return false;
     }
-    writer.print_value_separator(os, true);
-
-    writer.print_footer(os, "");
-    os << std::endl;
-    std::string s = os.str();
-    dest.write(s.c_str(), s.size());
+    return true;
 }
 
 int main(int argc, char* argv[])
@@ -478,11 +487,12 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    bool success = true;
     try
     {
         auto& sources = options.get_sources();
         auto& dest = options.get_dest(0);
-        const bool multiple = sources.size() /*options.inputs.size()*/ > 1;
+        const bool multiple = sources.size() > 1;
         for (auto& source : sources)
         {
             auto& filename = source.get_filename();
@@ -490,23 +500,23 @@ int main(int argc, char* argv[])
                 std::ostringstream os;
                 if (multiple)
                     os << filename << ":" << std::endl;
-                std::string s = os.str();
+                const std::string s = os.str();
                 dest.write(s.c_str(), s.size());
             }
             if (options.format == "yaml")
             {
                 yaml_writer writer(options.pretty);
-                dump(writer, source, dest, options.with_hash);
+                success = dump(writer, source, dest, options.with_hash) && success;
             }
             else if (options.format == "json")
             {
                 json_writer writer(options.pretty);
-                dump(writer, source, dest, options.with_hash);
+                success = dump(writer, source, dest, options.with_hash) && success;
             }
             else if (options.format == "xml")
             {
                 xml_writer writer(options.pretty);
-                dump(writer, source, dest, options.with_hash);
+                success = dump(writer, source, dest, options.with_hash) && success;
             }
         }
     }
@@ -522,5 +532,5 @@ int main(int argc, char* argv[])
     }
 
 
-    return EXIT_SUCCESS;
+    return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
