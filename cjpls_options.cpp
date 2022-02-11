@@ -76,12 +76,12 @@ bool cjpls_options::process(int argc, char* argv[])
             ("output,o", po::value(&outputs) /*->required()*/, "Output filename. Required ") // output
             ("interleave_mode,m", po::value(&interleave_mode_str),
              "Output interleave mode: `none|line|samples`. "
-             "Default to input format if not specified.")                         // interleave mode
-            ("near_lossless,n", po::value(&near_lossless), "near lossless value") // near lossless
+             "Default to input format if not specified.")                                      // interleave mode
+            ("near_lossless,n", po::value(&jls_options_.near_lossless), "near lossless value") // near lossless
             ("preset_coding_parameters,k", po::value(&pcp),
              "preset coding parameters: "
              "maximum_sample_value, threshold1, threshold2, threshold3, reset_value") // preset coding parameters
-            ("standard_spiff_header", po::value(&standard_spiff_header),
+            ("standard_spiff_header", po::value(&jls_options_.standard_spiff_header),
              "Write a standard spiff header: 'yes'/'no'.") // spiff header
             ("color_transformation,t", po::value(&color_transformation_str),
              "Color transformation: `none|hp1|hp2|hp3` (HP extension).") // color transformation
@@ -148,26 +148,26 @@ bool cjpls_options::process(int argc, char* argv[])
             throw;
         }
 
-        interleave_mode = charls::interleave_mode::none;
-        color_transformation = charls::color_transformation::none;
+        jls_options_.interleave_mode = charls::interleave_mode::none;
+        jls_options_.color_transformation = charls::color_transformation::none;
         planar_configuration = charls::interleave_mode::sample;
 
         if (vm.count("color_transformation"))
         {
-            color_transformation = string_to_color_transformation(color_transformation_str.c_str());
+            jls_options_.color_transformation = string_to_color_transformation(color_transformation_str.c_str());
         }
         if (vm.count("interleave_mode"))
         {
-            interleave_mode = string_to_interleave_mode(interleave_mode_str.c_str());
+            jls_options_.interleave_mode = string_to_interleave_mode(interleave_mode_str.c_str());
         }
         if (vm.count("preset_coding_parameters"))
         {
             const int* val = pcp.values;
-            preset_coding_parameters.maximum_sample_value = val[0];
-            preset_coding_parameters.threshold1 = val[1];
-            preset_coding_parameters.threshold2 = val[2];
-            preset_coding_parameters.threshold3 = val[3];
-            preset_coding_parameters.reset_value = val[4];
+            jls_options_.preset_coding_parameters.maximum_sample_value = val[0];
+            jls_options_.preset_coding_parameters.threshold1 = val[1];
+            jls_options_.preset_coding_parameters.threshold2 = val[2];
+            jls_options_.preset_coding_parameters.threshold3 = val[3];
+            jls_options_.preset_coding_parameters.reset_value = val[4];
         }
         if (vm.count("size"))
         {

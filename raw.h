@@ -10,12 +10,13 @@ class raw : public format
 {
 public:
     static const format& get();
-    bool detect(image_info const& ii, source& s) const override;
+    bool detect(source& s, image_info const& ii) const override;
     bool detect2(djpls_options const& options) const override;
 
     void read_info(source& s, image& i) const override;
-    void write_info(dest& d, const image& i) const override;
     void read_data(source& s, image& i) const override;
-    void write_data(dest& d, const image& i) const override;
+
+    void write_info(dest& d, const image& i, const jls_options& jo) const override;
+    void write_data(dest& d, const image& i, const jls_options& jo) const override;
 };
 } // namespace jlst

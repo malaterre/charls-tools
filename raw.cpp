@@ -45,7 +45,7 @@ static size_t compute_len(charls::frame_info const& i)
     return len;
 }
 
-bool raw::detect(image_info const& ii, source& s) const
+bool raw::detect(source& s, image_info const& ii) const
 {
     auto& fi = ii.frame_info();
     if (fi.width == 0 || fi.height == 0)
@@ -90,11 +90,11 @@ void raw::read_data(source& ifs, image& i) const
     ifs.read(pd.data(), pd.size());
 }
 
-void raw::write_info(dest& d, const image& i) const
+void raw::write_info(dest& d, const image& i, const jls_options& jo) const
 {
 }
 
-void raw::write_data(dest& d, const image& i) const
+void raw::write_data(dest& d, const image& i, const jls_options& jo) const
 {
     //    ifs.write(static_cast<char*>(buffer), len);
 }

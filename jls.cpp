@@ -10,157 +10,83 @@
 #include <vector>
 
 namespace jlst {
-bool jls::detect(image_info const& ii, source& s) const
+bool jls::detect(source& s, image_info const& ii) const
 {
-    const int c = s.peek();
-    return c == 'P';
+    return false;
 }
 bool jls::detect2(const djpls_options&) const
 {
     return true;
 }
 
-namespace {
-// Return 12 for input `4095`
-constexpr std::uint32_t log2(const std::uint32_t n) noexcept
-{
-    std::uint32_t x{};
-    while (n > (1u << x))
-    {
-        ++x;
-    }
-    return x;
-}
-static std::string& jls_trim_comment(std::string& s) noexcept
-{
-    s.erase(s.begin()); // remove leading '#'
-    while (s.compare(0, 1, " ") == 0)
-        s.erase(s.begin()); // leading whitespaces
-    while (s.size() > 0 && s.compare(s.size() - 1, 1, " ") == 0)
-        s.erase(s.end() - 1); // trailing whitespaces
-    return s;
-}
-} // namespace
-
 void jls::read_info(source& fs, image& i) const
 {
-    auto& ii = i.get_image_info();
-    std::string str;
-    str = fs.getline();
-    if (str != "P5" && str != "P6")
-    {
-        throw std::invalid_argument(str);
-    }
-    // component count:
-    if (str[1] == '5')
-    {
-        ii.frame_info().component_count = 1;
-        ii.interleave_mode() = charls::interleave_mode::none;
-    }
-    else if (str[1] == '6')
-    {
-        ii.frame_info().component_count = 3;
-        ii.interleave_mode() = charls::interleave_mode::sample;
-    }
-    // comment
-    std::string comment;
-    while (fs.peek() == '#')
-    {
-        str = fs.getline();
-        if (!comment.empty())
-            comment += "\n";
-        comment += jls_trim_comment(str);
-    }
-    ii.comment() = comment;
-    // width / height:
-    str = fs.getline();
-    {
-        std::stringstream ss(str);
-        long long w;
-        long long h;
-        ss >> w;
-        if (w <= 0 || w >= std::numeric_limits<uint32_t>::max())
-            throw std::invalid_argument(str);
-        ss >> h;
-        if (h <= 0 || h >= std::numeric_limits<uint32_t>::max())
-            throw std::invalid_argument(str);
-
-        ii.frame_info().width = w;
-        ii.frame_info().height = h;
-    }
-    // bits per sample:
-    str = fs.getline();
-    {
-        std::stringstream ss(str);
-        long long bps;
-        ss >> bps;
-        if (bps <= 0 || bps >= std::numeric_limits<uint32_t>::max())
-            throw std::invalid_argument(str);
-
-        ii.frame_info().bits_per_sample = log2(bps);
-    }
-    // now is a good time to compute stride:
-    auto const bytes_per_sample{(ii.frame_info().bits_per_sample + 7) / 8};
-    i.get_image_data().stride() = ii.frame_info().width * bytes_per_sample * ii.frame_info().component_count;
 }
 
 void jls::read_data(source& fs, image& i) const
 {
-    auto& id = i.get_image_data();
-    auto& pd = id.pixel_data();
-    uint8_t* buf8 = pd.data();
-    auto len = pd.size();
-    fs.read(buf8, len);
-    auto& ii = i.get_image_info();
-    if (ii.frame_info().bits_per_sample > 8)
-    {
-        for (size_t i{}; i < len - 1; i += 2)
-        {
-            std::swap(buf8[i], buf8[i + 1]);
-        }
-    }
 }
 
-void jls::write_info(dest& d, const image& i) const
+namespace {
+static std::vector<uint8_t> compress(jlst::image const& image, const jlst::jls_options& options)
 {
-    std::stringstream fs;
-    auto& ii = i.get_image_info();
-    if (ii.frame_info().component_count == 1)
-        fs << "P5\n";
+    auto const& frame_info = image.get_image_info().frame_info();
+    // what if user requested 'line' or 'sample' for single component ? Let's
+    // handle it here (not sure why charls does not handle it internally).
+    //    auto& options = opt.get_jls_options();
+    if (frame_info.component_count == 1)
+    {
+        if (options.interleave_mode != charls::interleave_mode::none)
+            throw std::invalid_argument("Invalid interleave_mode for single component. Use 'none'");
+    }
+
+    charls::jpegls_encoder encoder;
+
+    // setup encoder using compressor's options:
+    encoder
+        .interleave_mode(options.interleave_mode)                   // interleave_mode
+        .near_lossless(options.near_lossless)                       // near_lossless
+        .preset_coding_parameters(options.preset_coding_parameters) // preset_coding_parameters
+        .color_transformation(options.color_transformation);        // color_transformation
+
+    // setup encoder using input image:
+    encoder.frame_info(frame_info); // frame_info
+
+    // allocate output:
+    std::vector<uint8_t> buffer(encoder.estimated_destination_size());
+    encoder.destination(buffer);
+    // now that destination buffer is set, write SPIFF header:
+    if (options.standard_spiff_header)
+    {
+        const charls::spiff_color_space spiff_color_space =
+            frame_info.component_count == 1 ? charls::spiff_color_space::grayscale : charls::spiff_color_space::rgb;
+        encoder.write_standard_spiff_header(spiff_color_space);
+    }
+
+    const auto transform_pixel_data{image.transform(options.interleave_mode)};
+    size_t encoded_size;
+    if (options.interleave_mode == charls::interleave_mode::none)
+    {
+        encoded_size = encoder.encode(transform_pixel_data);
+    }
     else
-        fs << "P6\n";
-    fs << ii.frame_info().width << " " << ii.frame_info().height << '\n';
-    fs << ((1 << ii.frame_info().bits_per_sample) - 1) << '\n';
-    const std::string s = fs.str();
-    d.write(s.c_str(), s.size());
+    {
+        encoded_size = encoder.encode(transform_pixel_data, image.get_image_data().stride());
+    }
+    buffer.resize(encoded_size);
+
+    return buffer;
+}
+} // end namespace
+
+void jls::write_info(dest& d, const image& i, const jls_options& jo) const
+{
 }
 
-void jls::write_data(dest& fs, const image& i) const
+void jls::write_data(dest& fs, const image& i, const jls_options& jo) const
 {
-    auto& ii = i.get_image_info();
-    auto& id = i.get_image_data();
-    auto& pd = id.pixel_data();
-
-    auto len = pd.size();
-    std::vector<unsigned char> buf8(pd);
-    const size_t stride = ii.frame_info().width * (ii.frame_info().bits_per_sample / 8) * ii.frame_info().component_count;
-    if (ii.frame_info().component_count == 3)
-    {
-        if (ii.interleave_mode() == charls::interleave_mode::none)
-        {
-            std::vector<unsigned char> copy = utils::planar_to_triplet(buf8, ii.frame_info().width, ii.frame_info().height,
-                                                                       ii.frame_info().bits_per_sample, stride);
-            buf8.assign(copy.begin(), copy.end());
-        }
-    }
-    if (ii.frame_info().bits_per_sample > 8)
-    {
-        for (size_t i{}; i < len - 1; i += 2)
-        {
-            std::swap(buf8[i], buf8[i + 1]);
-        }
-    }
-    fs.write(reinterpret_cast<char*>(buf8.data()), buf8.size());
+    auto encoded_buffer{compress(i, jo)};
+    fs.write(encoded_buffer.data(), encoded_buffer.size());
 }
 
 const format& jls::get()

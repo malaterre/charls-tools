@@ -15,6 +15,9 @@ class image_info
     std::string comment_{};
 
 public:
+    bool invalid();
+    bool operator==(const image_info& other) const;
+
     charls::frame_info& frame_info()
     {
         return frame_info_;
@@ -47,6 +50,7 @@ class image_data
     std::vector<uint8_t> pixel_data_{};
 
 public:
+    void append(image_data const& id);
     std::size_t& stride()
     {
         return stride_;
@@ -92,7 +96,7 @@ public:
         return image_data_;
     }
 
-    void load(const jlst::format& format, jlst::source& source);
+    void append(image const& other);
 
     std::vector<uint8_t> transform(charls::interleave_mode const& interleave_mode) const;
 };

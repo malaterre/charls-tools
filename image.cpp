@@ -5,19 +5,44 @@
 #include "utils.h"
 
 #include <cassert>
+#include <cstring>
 
 namespace jlst {
 
-void image::load(const jlst::format& format, jlst::source& source)
+bool image_info::invalid()
 {
-    auto& image_info = this->get_image_info();
-    auto& image_data = this->get_image_data();
-    format.read_info(source, *this);
-    auto const& info = image_info.frame_info();
-    auto& pixel_data = image_data.pixel_data();
-    auto const bytes_per_sample{(info.bits_per_sample + 7) / 8};
-    pixel_data.resize(info.width * info.height * bytes_per_sample * info.component_count);
-    format.read_data(source, *this);
+    return frame_info_.width == 0;
+}
+inline bool operator==(const charls::frame_info& lhs, const charls::frame_info& rhs)
+{
+    return lhs.width == rhs.width && lhs.height == rhs.height && lhs.bits_per_sample == rhs.bits_per_sample &&
+           lhs.component_count == rhs.component_count;
+}
+bool image_info::operator==(const image_info& other) const
+{
+    const bool b1 = frame_info_ == other.frame_info_;
+    const bool b2 = interleave_mode_ == other.interleave_mode_;
+    return b1 && b2;
+}
+void image_data::append(image_data const& id)
+{
+    pixel_data_.insert(pixel_data_.end(), id.pixel_data_.begin(), id.pixel_data_.end());
+}
+
+void image::append(image const& other)
+{
+    if (image_info_.invalid())
+    {
+        image_info_ = other.image_info_;
+        image_data_ = other.image_data_;
+    }
+    else
+    {
+        if (image_info_ == other.image_info_)
+        {
+            image_data_.append(other.image_data_);
+        }
+    }
 }
 
 std::vector<uint8_t> image::transform(charls::interleave_mode const& interleave_mode) const

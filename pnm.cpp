@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace jlst {
-bool pnm::detect(image_info const& ii, source& s) const
+bool pnm::detect(source& s, image_info const& ii) const
 {
     const int c = s.peek();
     return c == 'P';
@@ -121,7 +121,7 @@ void pnm::read_data(source& fs, image& i) const
     }
 }
 
-void pnm::write_info(dest& d, const image& i) const
+void pnm::write_info(dest& d, const image& i, const jls_options& jo) const
 {
     std::stringstream fs;
     auto& ii = i.get_image_info();
@@ -135,7 +135,7 @@ void pnm::write_info(dest& d, const image& i) const
     d.write(s.c_str(), s.size());
 }
 
-void pnm::write_data(dest& fs, const image& i) const
+void pnm::write_data(dest& fs, const image& i, jls_options const& jo) const
 {
     auto& ii = i.get_image_info();
     auto& id = i.get_image_data();
@@ -161,7 +161,7 @@ void pnm::write_data(dest& fs, const image& i) const
             std::swap(buf8[i], buf8[i + 1]);
         }
     }
-    fs.write(reinterpret_cast<char*>(buf8.data()), buf8.size());
+    fs.write(buf8.data(), buf8.size());
 }
 
 const format& pnm::get()
