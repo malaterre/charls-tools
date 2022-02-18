@@ -34,10 +34,7 @@ constexpr std::uint32_t log2(const std::uint32_t n) noexcept
 static std::string& pnm_trim_comment(std::string& s) noexcept
 {
     s.erase(s.begin()); // remove leading '#'
-    while (s.compare(0, 1, " ") == 0)
-        s.erase(s.begin()); // leading whitespaces
-    while (s.size() > 0 && s.compare(s.size() - 1, 1, " ") == 0)
-        s.erase(s.end() - 1); // trailing whitespaces
+    // no need to remove the leading/trailing whitespaces at this point.
     return s;
 }
 } // namespace
@@ -68,7 +65,7 @@ void pnm::read_info(source& fs, image& i) const
     {
         str = fs.getline();
         if (!comment.empty())
-            comment += "\n";
+            comment += "\n"; // FIXME: UNIX style ?
         comment += pnm_trim_comment(str);
     }
     ii.comment() = comment;
@@ -129,6 +126,11 @@ void pnm::write_info(dest& d, const image& i, const jls_options& jo) const
         fs << "P5\n";
     else
         fs << "P6\n";
+    // write comment if any:
+    auto& comment = ii.comment();
+    if (!comment.empty())
+        fs << '#' << comment << '\n';
+
     fs << ii.frame_info().width << " " << ii.frame_info().height << '\n';
     fs << ((1 << ii.frame_info().bits_per_sample) - 1) << '\n';
     const std::string s = fs.str();

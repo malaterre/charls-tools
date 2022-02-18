@@ -63,6 +63,15 @@ static std::vector<uint8_t> compress(jlst::image const& image, const jlst::jls_o
         encoder.write_standard_spiff_header(spiff_color_space);
     }
 
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+    {
+        // the following writes an extra \0
+        // encoder.write_comment(image.get_image_info().comment().c_str());
+        auto& comment = image.get_image_info().comment();
+        encoder.write_comment(comment.c_str(), comment.size());
+    }
+#endif
+
     const auto transform_pixel_data{image.transform(options.interleave_mode)};
     size_t encoded_size;
     if (options.interleave_mode == charls::interleave_mode::none)

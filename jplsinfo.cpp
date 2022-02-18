@@ -432,6 +432,16 @@ static bool dump(writer& writer, jlst::source& source, jlst::dest& dest, bool wi
 
         charls::jpegls_decoder decoder;
         decoder.source(encoded_source);
+        // comment handling, must be setup before any read_* function
+        std::string comment;
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+        {
+            decoder.at_comment([&comment](const void* data, const size_t size) noexcept {
+                comment = std::string(static_cast<const char*>(data), size);
+            });
+        }
+#endif
+
         // start decoding to check any exception:
         decoder.read_spiff_header();
 
@@ -444,6 +454,13 @@ static bool dump(writer& writer, jlst::source& source, jlst::dest& dest, bool wi
         }
         decoder.read_header();
         print_header(writer, os, decoder);
+
+        // comment:
+        if (!comment.empty())
+        {
+            writer.print_value_separator(os, false);
+            writer.print_value(os, "comment", comment);
+        }
 
         if (with_hash)
         {
