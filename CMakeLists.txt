@@ -134,6 +134,13 @@ find_path(
   NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 mark_as_advanced(CHARLS_ROOT)
 
+# locate charls test data root:
+find_path(
+  CHARLS_TEST_DATA "data/t87/T8SSE3.JLS"
+  PATHS $ENV{CHARLS_TEST_DATA} ${PROJECT_SOURCE_DIR}/../charls-test-data
+  NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+mark_as_advanced(CHARLS_TEST_DATA)
+
 # test:
 enable_testing()
 include(CTest) # Memcheck
