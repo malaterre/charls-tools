@@ -88,6 +88,7 @@ foreach(exe cjpls djpls jplsinfo)
     ${exe}
     ${exe}.cpp
     ${exe}_options.cpp
+    factory.cpp
     raw.cpp
     format.cpp
     pnm.cpp
