@@ -15,9 +15,17 @@ struct jls_options final
     charls::jpegls_pc_parameters preset_coding_parameters{};
     charls::color_transformation color_transformation{};
     bool standard_spiff_header{};
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+    charls::encoding_options encoding_options{};
+#endif
 };
 struct cjpls_options final : options
 {
+    std::string type_;
+    const std::string& get_type() const
+    {
+        return type_;
+    }
     // options for input image (raw input)
     image_info image_info_;
     const image_info& get_image_info() const

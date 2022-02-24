@@ -1,7 +1,9 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "djpls_options.h"
+#include "factory.h"
 #include "image.h"
+#include "jls.h"
 #include "pnm.h"
 #include "raw.h"
 
@@ -9,25 +11,18 @@
 #include <iostream>
 #include <vector>
 
-static const jlst::format& get_format(jlst::djpls_options& options)
+static std::unique_ptr<jlst::format> get_format(jlst::djpls_options& options)
 {
-    using refformat = std::reference_wrapper<const jlst::format>;
-    static const refformat formats[] = {jlst::pnm::get(), jlst::raw::get()};
+    jlst::format* ptr = jlst::factory::instance().get_format_from_type(options.get_type());
+    if (ptr)
+        return std::unique_ptr<jlst::format>(ptr);
 
-    for (const jlst::format& format : formats)
-    {
-        if (format.detect2(options))
-        {
-            return format;
-        }
-    }
     throw std::invalid_argument("no format");
 }
 
 static void decode(jlst::djpls_options& options)
 {
-    const jlst::format& format = get_format(options);
-
+#if 0
     const std::vector<uint8_t> encoded_source = options.get_source(0).read_bytes();
     charls::jpegls_decoder decoder;
     decoder.source(encoded_source);
@@ -50,11 +45,17 @@ static void decode(jlst::djpls_options& options)
     input_image.get_image_info().frame_info() = decoder.frame_info();
     input_image.get_image_info().interleave_mode() = decoder.interleave_mode();
     input_image.get_image_info().comment() = comment;
-    // format.get_stride() = 0; // FIXME ?
-    jlst::jls_options jo;
-    format.write_info(options.get_dest(0), input_image, jo);
     input_image.get_image_data().pixel_data() = decoded_buffer;
-    format.write_data(options.get_dest(0), input_image, jo);
+#else
+    jlst::image input_image;
+    std::unique_ptr<jlst::format> jls_format(jlst::factory::instance().get_format_from_type("jls"));
+    input_image = jls_format->load(options.get_source(0), input_image.get_image_info());
+#endif
+
+    auto format = get_format(options);
+    jlst::jls_options jo;
+    format->write_info(options.get_dest(0), input_image, jo);
+    format->write_data(options.get_dest(0), input_image, jo);
 }
 
 int main(int argc, char* argv[])

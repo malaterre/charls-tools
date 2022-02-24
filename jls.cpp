@@ -1,6 +1,7 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "jls.h"
+#include "factory.h"
 #include "image.h"
 #include "utils.h"
 
@@ -10,8 +11,25 @@
 #include <vector>
 
 namespace jlst {
+bool jls::handle_type(std::string const& type) const
+{
+    return type == "jls";
+}
 bool jls::detect(source& s, image_info const& ii) const
 {
+    try
+    {
+        charls::jpegls_decoder decoder;
+        std::vector<uint8_t> buf;
+        buf.resize(64);
+        s.read(buf.data(), buf.size());
+        decoder.source(buf);
+        decoder.read_header();
+        return true;
+    }
+    catch (std::exception& e)
+    {
+    }
     return false;
 }
 bool jls::detect2(const djpls_options&) const
@@ -21,7 +39,58 @@ bool jls::detect2(const djpls_options&) const
 
 void jls::read_info(source& fs, image& i) const
 {
+    fs.rewind();
+    charls::jpegls_decoder decoder;
+    std::vector<uint8_t> buf;
+    buf.resize(64);
+    fs.read(buf.data(), buf.size());
+    decoder.source(buf);
+    // comment handling, must be setup before any read_* function
+    std::string comment;
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+    {
+        decoder.at_comment([&comment](const void* data, const size_t size) noexcept {
+            comment = std::string(static_cast<const char*>(data), size);
+        });
+    }
+#endif
+
+    decoder.read_header();
+    const charls::frame_info& fi = decoder.frame_info();
+    i.get_image_info().frame_info() = decoder.frame_info();
+    i.get_image_info().interleave_mode() = decoder.interleave_mode();
+    i.get_image_info().comment() = comment;
 }
+
+namespace {
+static void decompress(source& fs, image& i)
+{
+    const std::vector<uint8_t> encoded_source = fs.read_bytes();
+    charls::jpegls_decoder decoder;
+    decoder.source(encoded_source);
+    // comment handling, must be setup before any read_* function
+    std::string comment;
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+    {
+        decoder.at_comment([&comment](const void* data, const size_t size) noexcept {
+            comment = std::string(static_cast<const char*>(data), size);
+        });
+    }
+#endif
+    decoder.read_header();
+
+    const charls::frame_info& fi = decoder.frame_info();
+    i.get_image_info().frame_info() = decoder.frame_info();
+    i.get_image_info().interleave_mode() = decoder.interleave_mode();
+    i.get_image_info().comment() = comment;
+
+    // std::vector<uint8_t> decoded_buffer(decoder.destination_size());
+    auto& decoded_buffer = i.get_image_data().pixel_data();
+    decoded_buffer.resize(decoder.destination_size());
+    decoder.decode(decoded_buffer);
+}
+
+} // end namespace
 
 void jls::read_data(source& fs, image& i) const
 {
@@ -33,7 +102,7 @@ static std::vector<uint8_t> compress(jlst::image const& image, const jlst::jls_o
     auto const& frame_info = image.get_image_info().frame_info();
     // what if user requested 'line' or 'sample' for single component ? Let's
     // handle it here (not sure why charls does not handle it internally).
-    //    auto& options = opt.get_jls_options();
+    // `jpeg` seems to handle line/sample for single input...not clear what is legal
     if (frame_info.component_count == 1)
     {
         if (options.interleave_mode != charls::interleave_mode::none)
@@ -48,6 +117,10 @@ static std::vector<uint8_t> compress(jlst::image const& image, const jlst::jls_o
         .near_lossless(options.near_lossless)                       // near_lossless
         .preset_coding_parameters(options.preset_coding_parameters) // preset_coding_parameters
         .color_transformation(options.color_transformation);        // color_transformation
+
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+    encoder.encoding_options(options.encoding_options);
+#endif
 
     // setup encoder using input image:
     encoder.frame_info(frame_info); // frame_info
@@ -68,7 +141,8 @@ static std::vector<uint8_t> compress(jlst::image const& image, const jlst::jls_o
         // the following writes an extra \0
         // encoder.write_comment(image.get_image_info().comment().c_str());
         auto& comment = image.get_image_info().comment();
-        encoder.write_comment(comment.c_str(), comment.size());
+        if (!comment.empty())
+            encoder.write_comment(comment.c_str(), comment.size());
     }
 #endif
 
@@ -97,10 +171,15 @@ void jls::write_data(dest& fs, const image& i, const jls_options& jo) const
     auto encoded_buffer{compress(i, jo)};
     fs.write(encoded_buffer.data(), encoded_buffer.size());
 }
+format* jls::clone() const
+{
+    return new jls;
+}
 
-const format& jls::get()
+const format* jls::get()
 {
     static const jls jls_;
-    return jls_;
+    return &jls_;
 }
+static bool b = factory::instance().registerFormat(jls::get(), 1);
 } // namespace jlst

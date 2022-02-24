@@ -10,7 +10,9 @@ class jls_options;
 class pnm : public format
 {
 public:
-    static const format& get();
+    static const format* get();
+    format* clone() const;
+    bool handle_type(std::string const& type) const override;
     // bool detect(cjpls_options const& options) override;
     bool detect(source& s, image_info const& ii) const override;
     bool detect2(djpls_options const& options) const override;

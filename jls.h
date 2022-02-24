@@ -9,7 +9,9 @@ namespace jlst {
 class jls : public format
 {
 public:
-    static const format& get();
+    static const format* get();
+    format* clone() const;
+    bool handle_type(std::string const& type) const override;
     // bool detect(cjpls_options const& options) override;
     bool detect(source& s, image_info const& ii) const override;
     bool detect2(djpls_options const& options) const override;
@@ -19,5 +21,9 @@ public:
 
     void write_info(dest& d, const image& i, const jls_options& jo) const override;
     void write_data(dest& d, const image& i, const jls_options& jo) const override;
+
+private:
+    charls::jpegls_decoder decoder_;
+    charls::jpegls_encoder encoder_;
 };
 } // namespace jlst

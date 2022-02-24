@@ -1,5 +1,6 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
+#include "factory.h"
 #include "image.h"
 #include "jls.h"
 #include "pnm.h"
@@ -17,8 +18,9 @@
 
 #include "cjpls_options.h"
 
-static const jlst::format& get_format(const jlst::cjpls_options& options, jlst::source& source)
+static std::unique_ptr<jlst::format> get_format(const jlst::cjpls_options& options, jlst::source& source)
 {
+#if 0
     using refformat = std::reference_wrapper<const jlst::format>;
     static refformat formats[] = {jlst::pnm::get(), jlst::raw::get()};
 
@@ -29,6 +31,13 @@ static const jlst::format& get_format(const jlst::cjpls_options& options, jlst::
             return format;
         }
     }
+#else
+    jlst::format* ptr = jlst::factory::instance().get_format_from_type(options.get_type());
+    if (!ptr)
+        ptr = jlst::factory::instance().detect_format(source);
+    if (ptr)
+        return std::unique_ptr<jlst::format>(ptr);
+#endif
     throw std::invalid_argument("no format");
 }
 
@@ -56,14 +65,14 @@ static void encode(jlst::cjpls_options& options)
     std::vector<jlst::image> images;
     for (auto& source : sources)
     {
-        const jlst::format& format = get_format(options, source);
-        auto input_image{format.load(source, options.get_image_info())};
+        auto format = get_format(options, source);
+        auto input_image{format->load(source, options.get_image_info())};
         images.push_back(input_image);
     }
 
     auto image{combine_images(images)};
 
-    jlst::jls::get().save(options.get_dest(0), image, options.get_jls_options());
+    jlst::jls::get()->save(options.get_dest(0), image, options.get_jls_options());
 }
 
 int main(int argc, char* argv[])

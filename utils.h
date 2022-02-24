@@ -2,14 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 #pragma once
 
-#include <cassert>
-#include <cstdlib> // EXIT_SUCCESS
-#include <fstream>
-#include <iostream>
+#include <cstddef> // std::size_t
+#include <cstdint>
 #include <vector>
-
-#include <charls/charls.h>
-
 
 namespace jlst {
 class dest;

@@ -18,24 +18,47 @@ static charls::interleave_mode string_to_planar_configuration(const char* argume
     if (strcmp(argument, "separate") == 0)
         return charls::interleave_mode::none;
 
-    throw std::runtime_error("Argument planar_configuration needs to be: contig or separate\n");
+    throw std::runtime_error("Argument planar_configuration needs to be: contig or separate");
+}
+
+static std::string compute_type_from_outputs(std::vector<std::string> const& outputs)
+{
+    if (outputs.empty())
+        throw std::runtime_error("compute_type_from_outputs is empty");
+    auto& ref = outputs[0];
+    auto pos = ref.rfind('.');
+    if (pos != std::string::npos)
+    {
+        return ref.substr(pos + 1);
+    }
+    throw std::runtime_error("compute_type_from_outputs no file extension");
 }
 
 bool djpls_options::process(int argc, char* argv[])
 {
     std::vector<std::string> inputs{};
     std::vector<std::string> outputs{};
-    namespace po = boost::program_options;
     std::string planar_configuration_str;
     {
-        po::options_description desc("Allowed options");
-        desc.add_options()("help,h", "print usage message")                                  // help
-            ("version", "print version")                                                     // version
-            ("input,i", po::value(&inputs) /*->required()*/, "Input filename. Required.")    // input
-            ("output,o", po::value(&outputs) /*->required()*/, "Output filename. Required ") // output
+        namespace po = boost::program_options;
+        po::options_description generic("Generic options (required when no redirects)");
+        generic.add_options()                                                      //
+            ("input,i", po::value(&inputs) /*->required()*/, "Input filename.")    // input
+            ("output,o", po::value(&outputs) /*->required()*/, "Output filename.") // output
+            ("type", po::value(&type_), "Output type (pgm, raw...).")              // output type
+            ;
+        po::options_description image("Image output options");
+        image.add_options() //
             ("planar_configuration,p", po::value(&planar_configuration_str),
              "Planar configuration ('contig' or 'separate', unless specified in the format header.") // planar configuration
             ;
+
+        po::options_description desc("Allowed options");
+        desc.add_options()("help,h", "print usage message") // help
+            ("version", "print version")                    // version
+            ;
+        desc.add(generic);
+        desc.add(image);
 
         po::positional_options_description p;
         // do not allow more than one positional arg for now:
@@ -78,6 +101,11 @@ bool djpls_options::process(int argc, char* argv[])
             else
             {
                 add_stdout_output();
+            }
+
+            if (!vm.count("type"))
+            {
+                type_ = compute_type_from_outputs(outputs);
             }
         }
         catch (std::exception&)

@@ -1,3 +1,5 @@
+// Copyright (c) Mathieu Malaterre
+// SPDX-License-Identifier: BSD-3-Clause
 #include "crc32.h"
 
 #include <boost/crc.hpp>

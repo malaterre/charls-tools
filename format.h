@@ -14,6 +14,8 @@ class format
 {
 public:
     virtual ~format(){};
+    virtual format* clone() const = 0;
+    virtual bool handle_type(std::string const& type) const = 0;
     // virtual bool detect(cjpls_options const& options) = 0;
     virtual bool detect(source& s, image_info const& ii) const = 0;
     virtual bool detect2(djpls_options const& options) const = 0;

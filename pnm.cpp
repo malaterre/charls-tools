@@ -1,6 +1,7 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "pnm.h"
+#include "factory.h"
 #include "image.h"
 #include "utils.h"
 
@@ -10,6 +11,10 @@
 #include <vector>
 
 namespace jlst {
+bool pnm::handle_type(std::string const& type) const
+{
+    return type == "pgm" || type == "pnm";
+}
 bool pnm::detect(source& s, image_info const& ii) const
 {
     const int c = s.peek();
@@ -166,9 +171,16 @@ void pnm::write_data(dest& fs, const image& i, jls_options const& jo) const
     fs.write(buf8.data(), buf8.size());
 }
 
-const format& pnm::get()
+const format* pnm::get()
 {
     static const pnm pnm_;
-    return pnm_;
+    return &pnm_;
 }
+
+format* pnm::clone() const
+{
+    return new pnm;
+}
+
+static bool b = factory::instance().registerFormat(pnm::get());
 } // namespace jlst

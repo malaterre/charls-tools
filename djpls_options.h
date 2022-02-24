@@ -5,10 +5,17 @@
 #include "options.h"
 
 #include <charls/charls.h>
+#include <string>
 
 namespace jlst {
 struct djpls_options final : options
 {
+    std::string type_;
+    const std::string& get_type() const
+    {
+        return type_;
+    }
+
     charls::interleave_mode planar_configuration{};
 
     /**

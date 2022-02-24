@@ -1,8 +1,10 @@
+// Copyright (c) Mathieu Malaterre
+// SPDX-License-Identifier: BSD-3-Clause
 #include "utils.h"
 
-#include "dest.h"
+#include <cstring>   // std::memcpy
+#include <stdexcept> // std::invalid_argument
 
-#include <cstring> // std::memcpy
 namespace jlst {
 
 template<typename T>

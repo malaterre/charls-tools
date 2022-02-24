@@ -69,13 +69,17 @@ bool cjpls_options::process(int argc, char* argv[])
     auto& planar_configuration = image_info_.interleave_mode();
     {
         namespace po = boost::program_options;
-        po::options_description desc("Allowed options");
-        desc.add_options()("help,h", "print usage message")                                  // help
-            ("version", "print version")                                                     // version
-            ("input,i", po::value(&inputs) /*->required()*/, "Input filename. Required.")    // input
-            ("output,o", po::value(&outputs) /*->required()*/, "Output filename. Required ") // output
+        po::options_description generic("Generic options (required when no redirects)");
+        generic.add_options()                                                      //
+            ("input,i", po::value(&inputs) /*->required()*/, "Input filename.")    // input
+            ("output,o", po::value(&outputs) /*->required()*/, "Output filename.") // output
+            ("type", po::value(&type_), "Input type (pgm, raw...).")               // input type
+            ;
+
+        po::options_description jpegls("JPEG-LS output options");
+        jpegls.add_options() //
             ("interleave_mode,m", po::value(&interleave_mode_str),
-             "Output interleave mode: `none|line|samples`. "
+             "Output interleave mode: `none|line|sample`. "
              "Default to input format if not specified.")                                      // interleave mode
             ("near_lossless,n", po::value(&jls_options_.near_lossless), "near lossless value") // near lossless
             ("preset_coding_parameters,k", po::value(&pcp),
@@ -85,6 +89,10 @@ bool cjpls_options::process(int argc, char* argv[])
              "Write a standard spiff header: 'yes'/'no'.") // spiff header
             ("color_transformation,t", po::value(&color_transformation_str),
              "Color transformation: `none|hp1|hp2|hp3` (HP extension).") // color transformation
+            ;
+
+        po::options_description image("Image input options");
+        image.add_options() //
             ("size,s", po::value(&size),
              "Size of image (width, height), unless specified in the format header.") // size width + height
             ("bits_per_sample,b", po::value(&frame_info.bits_per_sample),
@@ -92,8 +100,25 @@ bool cjpls_options::process(int argc, char* argv[])
             ("component_count,c", po::value(&frame_info.component_count),
              "Component count, unless specified in the format header.") // component count
             ("planar_configuration,p", po::value(&planar_configuration_str),
-             "Planar configuration ('contig' or 'separate', unless specified in the format header.") // planar configuration
+             "Planar configuration ('contig' or 'separate'), unless specified in the format header.") // planar configuration
             ;
+
+        po::options_description encoding("Encoding options");
+        encoding.add_options()                                         //
+            ("even_destination_size", "even destination size")         //
+            ("include_version_number", "include version number")       //
+            ("include_pc_parameters_jai", "include pc parameters jai") //
+            ;
+
+        po::options_description desc("Allowed options");
+        desc.add_options()("help,h", "print usage message") // help
+            ("version", "print version")                    // version
+            ;
+
+        desc.add(generic);
+        desc.add(jpegls);
+        desc.add(encoding);
+        desc.add(image);
 
         po::positional_options_description p;
         // do not allow more than one positional arg for now:
@@ -178,6 +203,31 @@ bool cjpls_options::process(int argc, char* argv[])
         if (vm.count("planar_configuration"))
         {
             planar_configuration = string_to_planar_configuration(planar_configuration_str.c_str());
+        }
+        if (vm.count("even_destination_size"))
+        {
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+            jls_options_.encoding_options = jls_options_.encoding_options | charls::encoding_options::even_destination_size;
+#else
+            throw std::runtime_error("Argument even_destination_size is unhandled.\n");
+#endif
+        }
+        if (vm.count("include_version_number"))
+        {
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+            jls_options_.encoding_options = jls_options_.encoding_options | charls::encoding_options::include_version_number;
+#else
+            throw std::runtime_error("Argument include_version_number is unhandled.\n");
+#endif
+        }
+        if (vm.count("include_pc_parameters_jai"))
+        {
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+            jls_options_.encoding_options =
+                jls_options_.encoding_options | charls::encoding_options::include_pc_parameters_jai;
+#else
+            throw std::runtime_error("Argument include_pc_parameters_jai is unhandled.\n");
+#endif
         }
     }
     return true;
