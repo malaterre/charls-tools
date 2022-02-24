@@ -4,6 +4,8 @@
 
 #include "options.h"
 
+#include <string>
+
 namespace jlst {
 struct info_options final : options
 {

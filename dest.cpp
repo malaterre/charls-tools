@@ -5,8 +5,6 @@
 
 #include <stdexcept>
 
-#include <cstring>
-
 namespace jlst {
 
 dest::dest() : stream_(stdout)
@@ -15,7 +13,7 @@ dest::dest() : stream_(stdout)
 
 dest::dest(std::string const& filename)
 {
-    stream_ = fopen(filename.c_str(), "wb");
+    stream_ = std::fopen(filename.c_str(), "wb");
     if (!stream_)
         throw std::invalid_argument("bogus filename");
     filename_ = filename;
@@ -24,7 +22,7 @@ dest::dest(std::string const& filename)
 dest::~dest()
 {
     if (!filename_.empty())
-        fclose(stream_);
+        std::fclose(stream_);
 }
 
 size_t dest::write(const void* ptr, size_t n)

@@ -1,6 +1,7 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "format.h"
+#include "image.h"
 namespace jlst {
 image format::load(jlst::source& source, image_info const& ii) const
 {

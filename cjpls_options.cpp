@@ -1,13 +1,10 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "cjpls_options.h"
+
 #include "tuple.h"
-
-//#include "source.h"
 #include "version.h"
-
 #include <boost/program_options.hpp>
-#include <fstream>
 
 namespace jlst {
 

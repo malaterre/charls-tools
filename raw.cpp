@@ -1,12 +1,13 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "raw.h"
+#include "dest.h"
 #include "factory.h"
-
-#include <fstream>
-#include <sstream>
+#include "image.h"
+#include "source.h"
 
 #include <cassert>
+#include <charls/charls.h>
 
 namespace jlst {
 bool raw::handle_type(std::string const& type) const
@@ -38,21 +39,8 @@ static charls::frame_info compute_info(size_t const byte_count_file, image_info 
 
 static size_t compute_len(charls::frame_info const& i)
 {
-#if 0
-    size_t bits_per_sample = 0;
-    if (i.bits_per_sample <= 8)
-    {
-        bits_per_sample = 8;
-    }
-    else if (i.bits_per_sample <= 16)
-    {
-        bits_per_sample = 16;
-    }
-    const size_t len = i.width * i.height * (bits_per_sample / 8) * i.component_count;
-#else
     auto const bytes_per_sample{(i.bits_per_sample + 7) / 8};
     const size_t len = i.width * i.height * bytes_per_sample * i.component_count;
-#endif
     return len;
 }
 
@@ -64,19 +52,7 @@ bool raw::detect(source& s, image_info const& ii) const
     const auto byte_count_file = s.size();
 
     auto info = compute_info(byte_count_file, ii);
-    auto mode = charls::interleave_mode::none;
-    if (info.component_count == 3)
-    {
-        mode = ii.interleave_mode();
-    }
-    auto const bytes_per_sample{(info.bits_per_sample + 7) / 8};
-    auto stride = info.width * bytes_per_sample * info.component_count;
     return byte_count_file == compute_len(info);
-}
-
-bool raw::detect2(djpls_options const&) const
-{
-    return false;
 }
 
 void raw::read_info(source& s, image& i) const
@@ -90,7 +66,7 @@ void raw::read_info(source& s, image& i) const
 
     if (ii.frame_info().component_count == 3)
     {
-        ii.interleave_mode() == charls::interleave_mode::sample;
+        ii.interleave_mode() = charls::interleave_mode::sample;
     }
 
     // now is a good time to compute stride:
@@ -104,14 +80,14 @@ void raw::read_data(source& ifs, image& i) const
     ifs.read(pd.data(), pd.size());
 }
 
-void raw::write_info(dest& d, const image& i, const jls_options& jo) const
+void raw::write_info(dest&, const image&, const jls_options&) const
 {
 }
 
-void raw::write_data(dest& fs, const image& i, const jls_options& jo) const
+void raw::write_data(dest& fs, const image& img, const jls_options&) const
 {
-    auto& ii = i.get_image_info();
-    auto& id = i.get_image_data();
+    auto& ii = img.get_image_info();
+    auto& id = img.get_image_data();
     auto& pd = id.pixel_data();
     auto len = pd.size();
     std::vector<unsigned char> buf8(pd);
@@ -125,16 +101,16 @@ void raw::write_data(dest& fs, const image& i, const jls_options& jo) const
     fs.write(buf8.data(), buf8.size());
 }
 
-const format* raw::get()
-{
-    static const raw raw_;
-    return &raw_;
-}
 format* raw::clone() const
 {
     return new raw;
 }
 
+static const format* get()
+{
+    static const raw raw_;
+    return &raw_;
+}
 // set priority to 0 so that `raw` is always tested last
-static bool b = factory::instance().registerFormat(raw::get(), 0);
+static bool b = factory::instance().registerFormat(get(), 0);
 } // namespace jlst

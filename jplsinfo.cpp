@@ -3,9 +3,9 @@
 #include "crc32.h"
 #include "jplsinfo_options.h"
 #include <charls/charls.h>
-#include <fstream>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <vector>
 
 struct writer
@@ -102,6 +102,32 @@ struct yaml_writer : writer
 private:
 };
 
+namespace {
+// FIXME assume input is UTF-8:
+static std::string escape_json(const std::string &s) {
+    std::ostringstream o;
+    for (auto c = s.cbegin(); c != s.cend(); c++) {
+        switch (*c) {
+        case '"': o << "\\\""; break;
+        case '\\': o << "\\\\"; break;
+        case '\b': o << "\\b"; break;
+        case '\f': o << "\\f"; break;
+        case '\n': o << "\\n"; break;
+        case '\r': o << "\\r"; break;
+        case '\t': o << "\\t"; break;
+        default:
+            if ('\x00' <= *c && *c <= '\x1f') {
+                o << "\\u"
+                  << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(*c);
+            } else {
+                o << *c;
+            }
+        }
+    }
+    return o.str();
+}
+}
+
 struct json_writer : writer
 {
     json_writer(bool pretty) : writer(pretty)
@@ -150,7 +176,7 @@ struct json_writer : writer
             os << ' ';
         if (!is_integral)
             os << '"';
-        os << val;
+        os << escape_json(val);
         if (!is_integral)
             os << '"';
     }
@@ -391,7 +417,7 @@ static void print_hash(writer& writer, std::ostream& os, charls::jpegls_decoder 
 {
     std::vector<uint8_t> decoded_buffer(decoder.destination_size());
     decoder.decode(decoded_buffer);
-    std::string crc32 = jlst::get_crc32(decoded_buffer);
+    std::string crc32 = jlst::crc32::compute(decoded_buffer);
     const char header[] = "hash";
     writer.print_header(os, header);
     writer.print_value(os, "crc32", crc32);

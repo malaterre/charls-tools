@@ -1,11 +1,11 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "image.h"
-#include "format.h"
+
 #include "utils.h"
 
 #include <cassert>
-#include <cstring>
+#include <stdexcept> // for invalid_argument
 
 namespace jlst {
 

@@ -3,11 +3,10 @@
 #include "crc32.h"
 
 #include <boost/crc.hpp>
-#include <cstdint>
-#include <string>
+#include <cstdio> // std::sprintf
 
 namespace jlst {
-std::string get_crc32(std::vector<uint8_t> const& buffer)
+std::string crc32::compute(std::vector<uint8_t> const& buffer)
 {
     boost::crc_32_type result;
     result.process_bytes(buffer.data(), buffer.size());

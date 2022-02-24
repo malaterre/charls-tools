@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 #pragma once
 
-#include <charls/charls.h>
+#include <charls/public_types.h> // for frame_info, interleave_mode, charls...
+#include <cstddef>               // for size_t
+#include <cstdint>               // for uint8_t
+#include <string>                // for string, basic_string
 #include <vector>
 
 namespace jlst {
-class format;
-class source;
 class image_info
 {
     charls::frame_info frame_info_{};

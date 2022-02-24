@@ -1,12 +1,12 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
 #include "jls.h"
+
+#include "cjpls_options.h"
 #include "factory.h"
 #include "image.h"
 #include "utils.h"
 
-#include <fstream>
-#include <limits>
 #include <sstream>
 #include <vector>
 
@@ -15,7 +15,7 @@ bool jls::handle_type(std::string const& type) const
 {
     return type == "jls";
 }
-bool jls::detect(source& s, image_info const& ii) const
+bool jls::detect(source& s, image_info const&) const
 {
     try
     {
@@ -31,10 +31,6 @@ bool jls::detect(source& s, image_info const& ii) const
     {
     }
     return false;
-}
-bool jls::detect2(const djpls_options&) const
-{
-    return true;
 }
 
 void jls::read_info(source& fs, image& i) const
@@ -56,15 +52,14 @@ void jls::read_info(source& fs, image& i) const
 #endif
 
     decoder.read_header();
-    const charls::frame_info& fi = decoder.frame_info();
     i.get_image_info().frame_info() = decoder.frame_info();
     i.get_image_info().interleave_mode() = decoder.interleave_mode();
     i.get_image_info().comment() = comment;
 }
 
-namespace {
-static void decompress(source& fs, image& i)
+void jls::read_data(source& fs, image& i) const
 {
+    fs.rewind();
     const std::vector<uint8_t> encoded_source = fs.read_bytes();
     charls::jpegls_decoder decoder;
     decoder.source(encoded_source);
@@ -79,7 +74,6 @@ static void decompress(source& fs, image& i)
 #endif
     decoder.read_header();
 
-    const charls::frame_info& fi = decoder.frame_info();
     i.get_image_info().frame_info() = decoder.frame_info();
     i.get_image_info().interleave_mode() = decoder.interleave_mode();
     i.get_image_info().comment() = comment;
@@ -90,16 +84,10 @@ static void decompress(source& fs, image& i)
     decoder.decode(decoded_buffer);
 }
 
-} // end namespace
-
-void jls::read_data(source& fs, image& i) const
-{
-}
-
 namespace {
-static std::vector<uint8_t> compress(jlst::image const& image, const jlst::jls_options& options)
+static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& options)
 {
-    auto const& frame_info = image.get_image_info().frame_info();
+    auto const& frame_info = img.get_image_info().frame_info();
     // what if user requested 'line' or 'sample' for single component ? Let's
     // handle it here (not sure why charls does not handle it internally).
     // `jpeg` seems to handle line/sample for single input...not clear what is legal
@@ -140,13 +128,13 @@ static std::vector<uint8_t> compress(jlst::image const& image, const jlst::jls_o
     {
         // the following writes an extra \0
         // encoder.write_comment(image.get_image_info().comment().c_str());
-        auto& comment = image.get_image_info().comment();
+        auto& comment = img.get_image_info().comment();
         if (!comment.empty())
             encoder.write_comment(comment.c_str(), comment.size());
     }
 #endif
 
-    const auto transform_pixel_data{image.transform(options.interleave_mode)};
+    const auto transform_pixel_data{img.transform(options.interleave_mode)};
     size_t encoded_size;
     if (options.interleave_mode == charls::interleave_mode::none)
     {
@@ -154,7 +142,7 @@ static std::vector<uint8_t> compress(jlst::image const& image, const jlst::jls_o
     }
     else
     {
-        encoded_size = encoder.encode(transform_pixel_data, image.get_image_data().stride());
+        encoded_size = encoder.encode(transform_pixel_data, img.get_image_data().stride());
     }
     buffer.resize(encoded_size);
 
@@ -162,7 +150,7 @@ static std::vector<uint8_t> compress(jlst::image const& image, const jlst::jls_o
 }
 } // end namespace
 
-void jls::write_info(dest& d, const image& i, const jls_options& jo) const
+void jls::write_info(dest&, const image&, const jls_options&) const
 {
 }
 
@@ -176,10 +164,10 @@ format* jls::clone() const
     return new jls;
 }
 
-const format* jls::get()
+static const format* get()
 {
     static const jls jls_;
     return &jls_;
 }
-static bool b = factory::instance().registerFormat(jls::get(), 1);
+static bool b = factory::instance().registerFormat(get(), 1);
 } // namespace jlst
