@@ -20,14 +20,7 @@ struct writer
     virtual void print_footer(std::ostream& os, std::string const& footer) = 0;
     virtual void print_value_separator(std::ostream& os, bool eol) = 0;
     template<typename T>
-    void print_value(std::ostream& os, std::string const& key, const T& val)
-    {
-        std::stringstream ss;
-        ss << val;
-        const bool is_integral = std::is_integral<T>::value;
-        print_tab(os);
-        print_string(os, key, ss.str(), is_integral);
-    }
+    void print_value(std::ostream& os, std::string const& key, const T& val);
     virtual void print_string(std::ostream& os, std::string const& key, std::string const& val, bool is_integral) = 0;
     bool pretty()
     {
@@ -71,10 +64,10 @@ struct yaml_writer : writer
     {
         pop();
     }
-    ~yaml_writer()
+    ~yaml_writer() override
     {
     }
-    void print_header(std::ostream& os, std::string const& header)
+    void print_header(std::ostream& os, std::string const& header) override
     {
         if (indent_level() < 0)
         {
@@ -89,15 +82,15 @@ struct yaml_writer : writer
         os << '\n';
         push();
     }
-    void print_footer(std::ostream& os, std::string const&)
+    void print_footer(std::ostream& os, std::string const&) override
     {
         pop();
         print_tab(os);
     }
-    void print_value_separator(std::ostream&, bool)
+    void print_value_separator(std::ostream&, bool) override
     {
     }
-    void print_string(std::ostream& os, std::string const& key, std::string const& val, bool)
+    void print_string(std::ostream& os, std::string const& key, std::string const& val, bool) override
     {
         os << key;
         os << ':';
@@ -114,10 +107,10 @@ struct json_writer : writer
     json_writer(bool pretty) : writer(pretty)
     {
     }
-    ~json_writer()
+    ~json_writer() override
     {
     }
-    void print_header(std::ostream& os, std::string const& header)
+    void print_header(std::ostream& os, std::string const& header) override
     {
         print_tab(os);
         if (!header.empty())
@@ -134,20 +127,20 @@ struct json_writer : writer
             os << '\n';
         push();
     }
-    void print_footer(std::ostream& os, std::string const&)
+    void print_footer(std::ostream& os, std::string const&) override
     {
         pop();
         print_tab(os);
         os << '}';
     }
-    void print_value_separator(std::ostream& os, bool eol)
+    void print_value_separator(std::ostream& os, bool eol) override
     {
         if (!eol)
             os << ",";
         if (pretty())
             os << '\n';
     }
-    void print_string(std::ostream& os, std::string const& key, std::string const& val, bool is_integral)
+    void print_string(std::ostream& os, std::string const& key, std::string const& val, bool is_integral) override
     {
         os << '"' << key << '"';
         if (pretty())
@@ -170,10 +163,10 @@ struct xml_writer : writer
     xml_writer(bool pretty) : writer(pretty)
     {
     }
-    ~xml_writer()
+    ~xml_writer() override
     {
     }
-    void print_header(std::ostream& os, std::string const& header)
+    void print_header(std::ostream& os, std::string const& header) override
     {
         if (root())
         {
@@ -190,7 +183,7 @@ struct xml_writer : writer
             os << '\n';
         push();
     }
-    void print_footer(std::ostream& os, std::string const& header)
+    void print_footer(std::ostream& os, std::string const& header) override
     {
         pop();
         print_tab(os);
@@ -199,12 +192,12 @@ struct xml_writer : writer
         else
             os << '<' << '/' << header << '>';
     }
-    void print_value_separator(std::ostream& os, bool)
+    void print_value_separator(std::ostream& os, bool) override
     {
         if (pretty())
             os << '\n';
     }
-    void print_string(std::ostream& os, std::string const& key, std::string const& val, bool)
+    void print_string(std::ostream& os, std::string const& key, std::string const& val, bool) override
     {
         os << '<' << key << '>' << val;
         os << '<' << '/' << key << '>';
@@ -335,16 +328,25 @@ OSTREAMOP(color_transformation)
 
 #undef OSTREAMOP
 
+template<typename T>
+inline void writer::print_value(std::ostream& os, std::string const& key, const T& val)
+{
+    std::stringstream ss;
+    ss << val;
+    const bool is_integral = std::is_integral<T>::value;
+    print_tab(os);
+    print_string(os, key, ss.str(), is_integral);
+}
 
 #define PRINT(S, K) \
     writer.print_value(os, #K, S.K); \
-    writer.print_value_separator(os, false);
+    writer.print_value_separator(os, false)
 
 #define PRINTONLY(S, K) \
     writer.print_value(os, #K, S.K); \
-    writer.print_value_separator(os, true);
+    writer.print_value_separator(os, true)
 
-void print_spiff_header(writer& writer, std::ostream& os, charls::spiff_header const& spiff_header)
+static void print_spiff_header(writer& writer, std::ostream& os, charls::spiff_header const& spiff_header)
 {
     const char header[] = "spiff_header";
     writer.print_header(os, header);
@@ -362,7 +364,7 @@ void print_spiff_header(writer& writer, std::ostream& os, charls::spiff_header c
     writer.print_footer(os, header);
 }
 
-void print_preset_coding_parameters(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
+static void print_preset_coding_parameters(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
 {
     const char header[] = "preset_coding_parameters";
     writer.print_header(os, header);
@@ -374,7 +376,7 @@ void print_preset_coding_parameters(writer& writer, std::ostream& os, charls::jp
     PRINTONLY(pcp, reset_value);
     writer.print_footer(os, header);
 }
-void print_frame_info(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
+static void print_frame_info(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
 {
     const char header[] = "frame_info";
     writer.print_header(os, header);
@@ -403,13 +405,13 @@ static void print_hash(writer& writer, std::ostream& os, charls::jpegls_decoder 
 
 #define PRINTFUN(S, K) \
     writer.print_value(os, #K, S.K()); \
-    writer.print_value_separator(os, false);
+    writer.print_value_separator(os, false)
 #define PRINTFUNONLY(S, K) \
     writer.print_value(os, #K, S.K()); \
-    writer.print_value_separator(os, true);
+    writer.print_value_separator(os, true)
 
 
-void print_header(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
+static void print_header(writer& writer, std::ostream& os, charls::jpegls_decoder const& decoder)
 {
     const char header[] = "header";
     writer.print_header(os, header);

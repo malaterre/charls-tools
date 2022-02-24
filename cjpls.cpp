@@ -1,43 +1,26 @@
 // Copyright (c) Mathieu Malaterre
 // SPDX-License-Identifier: BSD-3-Clause
-#include "factory.h"
-#include "image.h"
-#include "jls.h"
-#include "pnm.h"
-#include "raw.h"
-#include "utils.h"
-#include "version.h"
-
-#include <cassert>
-#include <cstdlib> // EXIT_SUCCESS
-#include <fstream>
-#include <iostream>
-#include <vector>
-
-#include <charls/charls.h>
-
-#include "cjpls_options.h"
+#include "cjpls_options.h"       // for cjpls_options
+#include "factory.h"             // for factory
+#include "format.h"              // for format
+#include "image.h"               // for image, image_info
+#include <charls/public_types.h> // for frame_info
+#include <cstdlib>               // for EXIT_FAILURE, EXIT_SUCCESS
+#include <iostream>              // for operator<<, endl, basic_ostream, cerr
+#include <memory>                // for unique_ptr
+#include <stdexcept>             // for invalid_argument
+#include <vector>                // for vector
+namespace jlst {
+class source;
+}
 
 static std::unique_ptr<jlst::format> get_format(const jlst::cjpls_options& options, jlst::source& source)
 {
-#if 0
-    using refformat = std::reference_wrapper<const jlst::format>;
-    static refformat formats[] = {jlst::pnm::get(), jlst::raw::get()};
-
-    for (const jlst::format& format : formats)
-    {
-        if (format.detect(source, options.get_image_info()))
-        {
-            return format;
-        }
-    }
-#else
     jlst::format* ptr = jlst::factory::instance().get_format_from_type(options.get_type());
     if (!ptr)
         ptr = jlst::factory::instance().detect_format(source);
     if (ptr)
         return std::unique_ptr<jlst::format>(ptr);
-#endif
     throw std::invalid_argument("no format");
 }
 
@@ -72,7 +55,8 @@ static void encode(jlst::cjpls_options& options)
 
     auto image{combine_images(images)};
 
-    jlst::jls::get()->save(options.get_dest(0), image, options.get_jls_options());
+    std::unique_ptr<jlst::format> jls_format(jlst::factory::instance().get_format_from_type("jls"));
+    jls_format->save(options.get_dest(0), image, options.get_jls_options());
 }
 
 int main(int argc, char* argv[])

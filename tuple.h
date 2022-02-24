@@ -7,7 +7,7 @@
 // boost::program_options does not handle std::array so write our own wrapper
 // https://stackoverflow.com/questions/38465195/boostprogram-options-appears-to-cast-stdarray-to-boostarray
 template<typename T, int N>
-class tuple;
+struct tuple;
 template<typename T, int N>
 std::istream& operator>>(std::istream& is, tuple<T, N>& rhs);
 template<typename T, int N>

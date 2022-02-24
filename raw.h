@@ -10,7 +10,7 @@ class raw : public format
 {
 public:
     static const format* get();
-    format* clone() const;
+    format* clone() const override;
     bool handle_type(std::string const& type) const override;
     bool detect(source& s, image_info const& ii) const override;
     bool detect2(djpls_options const& options) const override;

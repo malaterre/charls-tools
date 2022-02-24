@@ -13,7 +13,9 @@ class dest;
 class format
 {
 public:
-    virtual ~format(){};
+    virtual ~format()
+    {
+    }
     virtual format* clone() const = 0;
     virtual bool handle_type(std::string const& type) const = 0;
     // virtual bool detect(cjpls_options const& options) = 0;
