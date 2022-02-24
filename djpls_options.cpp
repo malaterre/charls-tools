@@ -21,19 +21,6 @@ static charls::interleave_mode string_to_planar_configuration(const char* argume
     throw std::runtime_error("Argument planar_configuration needs to be: contig or separate");
 }
 
-static std::string compute_type_from_outputs(std::vector<std::string> const& outputs)
-{
-    if (outputs.empty())
-        throw std::runtime_error("compute_type_from_outputs is empty");
-    auto& ref = outputs[0];
-    auto pos = ref.rfind('.');
-    if (pos != std::string::npos)
-    {
-        return ref.substr(pos + 1);
-    }
-    throw std::runtime_error("compute_type_from_outputs no file extension");
-}
-
 bool djpls_options::process(int argc, char* argv[])
 {
     std::vector<std::string> inputs{};
@@ -105,7 +92,7 @@ bool djpls_options::process(int argc, char* argv[])
 
             if (!vm.count("type"))
             {
-                type_ = compute_type_from_outputs(outputs);
+                type_ = compute_type_from_filenames(outputs);
             }
         }
         catch (std::exception&)

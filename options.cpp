@@ -23,6 +23,18 @@ bool options::is_stdout_connected_to_terminal()
 #error isatty missing
 #endif
 }
+std::string options::compute_type_from_filenames(std::vector<std::string> const& outputs)
+{
+    if (outputs.empty())
+        throw std::runtime_error("compute_type_from_outputs is empty");
+    auto& ref = outputs[0];
+    auto pos = ref.rfind('.');
+    if (pos != std::string::npos)
+    {
+        return ref.substr(pos + 1);
+    }
+    throw std::runtime_error("compute_type_from_outputs no file extension");
+}
 
 source& options::get_source(int index)
 {

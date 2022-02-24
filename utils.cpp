@@ -57,8 +57,8 @@ static std::vector<T> planar_to_triplet_impl(const std::vector<T>& buffer, const
     return result;
 }
 
-std::vector<uint8_t> utils::triplet_to_planar(const std::vector<uint8_t>& buffer, const uint16_t width,
-                                              const uint16_t height, const uint8_t bits_per_sample, const size_t stride)
+std::vector<uint8_t> utils::triplet_to_planar(const std::vector<uint8_t>& buffer, const size_t width, const size_t height,
+                                              const uint8_t bits_per_sample, const size_t stride)
 {
     if (bits_per_sample <= 8)
     {
@@ -78,8 +78,8 @@ std::vector<uint8_t> utils::triplet_to_planar(const std::vector<uint8_t>& buffer
     throw std::invalid_argument("triplet_to_planar");
 }
 
-std::vector<uint8_t> utils::planar_to_triplet(const std::vector<uint8_t>& buffer, const uint16_t width,
-                                              const uint16_t height, const uint8_t bits_per_sample, const size_t stride)
+std::vector<uint8_t> utils::planar_to_triplet(const std::vector<uint8_t>& buffer, const size_t width, const size_t height,
+                                              const uint8_t bits_per_sample, const size_t stride)
 {
     if (bits_per_sample <= 8)
     {

@@ -150,6 +150,10 @@ bool cjpls_options::process(int argc, char* argv[])
             if (vm.count("input"))
             {
                 add_inputs(inputs);
+                if (!vm.count("type"))
+                {
+                    type_ = compute_type_from_filenames(inputs);
+                }
             }
             else
             {

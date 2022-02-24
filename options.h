@@ -58,6 +58,8 @@ protected:
         }
     }
 
+    static std::string compute_type_from_filenames(std::vector<std::string> const& filenames);
+
 private:
     static bool is_stdin_connected_to_terminal();
     static bool is_stdout_connected_to_terminal();

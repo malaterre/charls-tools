@@ -11,6 +11,7 @@
 #include <iostream>
 #include <vector>
 
+// compute output format (do not inspect source)
 static std::unique_ptr<jlst::format> get_format(jlst::djpls_options& options)
 {
     jlst::format* ptr = jlst::factory::instance().get_format_from_type(options.get_type());
