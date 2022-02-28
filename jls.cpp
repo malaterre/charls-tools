@@ -5,8 +5,10 @@
 #include "cjpls_options.h"
 #include "factory.h"
 #include "image.h"
+#include "jplstran_options.h"
 #include "utils.h"
 
+#include <cassert>
 #include <sstream>
 #include <vector>
 
@@ -57,11 +59,10 @@ void jls::read_info(source& fs, image& i) const
     i.get_image_info().comment() = comment;
 }
 
-void jls::read_data(source& fs, image& i) const
+namespace {
+static void decompress(charls::jpegls_decoder& decoder, source& fs, image& i)
 {
-    fs.rewind();
     const std::vector<uint8_t> encoded_source = fs.read_bytes();
-    charls::jpegls_decoder decoder;
     decoder.source(encoded_source);
     // comment handling, must be setup before any read_* function
     std::string comment;
@@ -82,6 +83,14 @@ void jls::read_data(source& fs, image& i) const
     auto& decoded_buffer = i.get_image_data().pixel_data();
     decoded_buffer.resize(decoder.destination_size());
     decoder.decode(decoded_buffer);
+}
+} // end namespace
+
+void jls::read_data(source& fs, image& i) const
+{
+    fs.rewind();
+    charls::jpegls_decoder decoder;
+    decompress(decoder, fs, i);
 }
 
 namespace {
@@ -107,7 +116,16 @@ static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& 
         .color_transformation(options.color_transformation);        // color_transformation
 
 #if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
-    encoder.encoding_options(options.encoding_options);
+    {
+        encoder.encoding_options(options.encoding_options);
+    }
+    {
+        // the following writes an extra \0
+        // encoder.write_comment(image.get_image_info().comment().c_str());
+        auto& comment = img.get_image_info().comment();
+        if (!comment.empty())
+            encoder.write_comment(comment.c_str(), comment.size());
+    }
 #endif
 
     // setup encoder using input image:
@@ -123,16 +141,6 @@ static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& 
             frame_info.component_count == 1 ? charls::spiff_color_space::grayscale : charls::spiff_color_space::rgb;
         encoder.write_standard_spiff_header(spiff_color_space);
     }
-
-#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
-    {
-        // the following writes an extra \0
-        // encoder.write_comment(image.get_image_info().comment().c_str());
-        auto& comment = img.get_image_info().comment();
-        if (!comment.empty())
-            encoder.write_comment(comment.c_str(), comment.size());
-    }
-#endif
 
     const auto transform_pixel_data{img.transform(options.interleave_mode)};
     size_t encoded_size;
@@ -159,6 +167,58 @@ void jls::write_data(dest& fs, const image& i, const jls_options& jo) const
     auto encoded_buffer{compress(i, jo)};
     fs.write(encoded_buffer.data(), encoded_buffer.size());
 }
+
+namespace {
+static void patch_header(std::vector<uint8_t>& v, int near)
+{
+    size_t pos = 0;
+    for (auto it = v.begin(); it != v.end(); ++it)
+    {
+        if (*it == 0xff)
+        {
+            ++it;
+            if (it != v.end() && *it == 0xda)
+            {
+                pos = it - v.begin();
+            }
+        }
+    }
+    if (pos != 0)
+    {
+        v[pos + 6] = near;
+    }
+}
+} // end namespace
+
+void jls::transform(dest& d, source& s, const tran_options& to) const
+{
+    jlst::image input_image;
+    charls::jpegls_decoder decoder;
+    decompress(decoder, s, input_image);
+
+    jls_options jo{};
+    jo.interleave_mode = decoder.interleave_mode();
+    jo.near_lossless = 0; // important
+    jo.preset_coding_parameters = decoder.preset_coding_parameters();
+    jo.color_transformation = decoder.color_transformation();
+    jo.standard_spiff_header = decoder.spiff_header_has_value();
+
+    jlst::image output_image;
+    if (to.type == tran_options::transform_type::wipe)
+    {
+        output_image.get_image_info() = input_image.get_image_info();
+        auto& region = to.region;
+        output_image.get_image_data().pixel_data() = input_image.wipe(region.X, region.Y, region.Width, region.Height);
+    }
+    else
+    {
+        throw std::runtime_error("todo");
+    }
+    auto encoded_buffer{compress(output_image, jo)};
+    patch_header(encoded_buffer, decoder.near_lossless());
+    d.write(encoded_buffer.data(), encoded_buffer.size());
+}
+
 format* jls::clone() const
 {
     return new jls;

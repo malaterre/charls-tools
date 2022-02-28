@@ -1,0 +1,33 @@
+% JPLSINFO(1) jplstran @JLST_VERSION@
+% Mathieu Malaterre
+% @JLST_DATE@
+
+# NAME
+
+jplstran – lossless transformation for JPEG-LS files
+
+# SYNOPSIS
+
+**jplstran**␣*input.jls*␣*output.jls*
+
+# DESCRIPTION
+
+**jplstran** Execute lossless transformation on JPEG-LS file. In particular it will not change image buffer where NEAR != 0
+
+# OPTIONS
+
+**-h**, **--help**
+:   Display a friendly help message.
+
+**--version**
+:   Display the current version of charls-tools as well as the underlying charls version used.
+
+**-i**, **--input**
+:   Specify the input file(s) to read.
+
+**-o**, **--output**
+:   Specify the output file(s) to write.
+
+# COPYRIGHT
+
+BSD-3-Clause

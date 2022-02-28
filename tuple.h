@@ -26,7 +26,7 @@ inline std::istream& operator>>(std::istream& is, tuple<T, N>& val)
     {
         if (i)
         {
-            if (is.peek() == ',')
+            if (is.peek() == ',' || is.peek() == 'x' || is.peek() == '+')
             {
                 is.ignore();
             }

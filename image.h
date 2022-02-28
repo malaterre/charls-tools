@@ -100,6 +100,13 @@ public:
     void append(image const& other);
 
     std::vector<uint8_t> transform(charls::interleave_mode const& interleave_mode) const;
+
+    std::vector<uint8_t> crop(uint32_t X, uint32_t Y, uint32_t width, uint32_t height);
+    std::vector<uint8_t> flip(bool vertical); // horizontal when false
+    std::vector<uint8_t> rotate(int degree);
+    std::vector<uint8_t> transpose();
+    std::vector<uint8_t> transverse();
+    std::vector<uint8_t> wipe(uint32_t X, uint32_t Y, uint32_t width, uint32_t height);
 };
 
 } // namespace jlst

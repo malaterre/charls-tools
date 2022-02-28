@@ -6,6 +6,7 @@
 #include <charls/charls.h>
 
 namespace jlst {
+class tran_options;
 class jls : public format
 {
 public:
@@ -18,6 +19,8 @@ public:
 
     void write_info(dest& d, const image& i, const jls_options& jo) const override;
     void write_data(dest& d, const image& i, const jls_options& jo) const override;
+
+    void transform(dest& d, source& s, const tran_options& jo) const;
 
 private:
     charls::jpegls_decoder decoder_;

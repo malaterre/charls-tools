@@ -76,4 +76,42 @@ std::vector<uint8_t> image::transform(charls::interleave_mode const& interleave_
     throw std::invalid_argument("invalid transform request");
 }
 
+std::vector<uint8_t> image::crop(uint32_t X, uint32_t Y, uint32_t width, uint32_t height)
+{
+}
+std::vector<uint8_t> image::flip(bool vertical)
+{
+}
+std::vector<uint8_t> image::rotate(int degree)
+{
+}
+std::vector<uint8_t> image::transpose()
+{
+}
+std::vector<uint8_t> image::transverse()
+{
+}
+std::vector<uint8_t> image::wipe(uint32_t X, uint32_t Y, uint32_t width, uint32_t height)
+{
+    auto& frame_info = get_image_info().frame_info();
+    auto& inbuffer = get_image_data().pixel_data();
+    std::vector<uint8_t> out;
+    out.resize(inbuffer.size());
+    for (uint32_t y{}; y != frame_info.height; ++y)
+    {
+        for (uint32_t x{}; x != frame_info.width; ++x)
+        {
+            if ((x >= X && x < X + width) && (y >= Y && y < Y + height))
+            {
+                out[y * width + x] = 0;
+            }
+            else
+            {
+                out[y * width + x] = inbuffer[y + width + x];
+            }
+        }
+    }
+    return out;
+}
+
 } // namespace jlst

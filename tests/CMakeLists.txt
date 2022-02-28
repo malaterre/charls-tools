@@ -1,7 +1,7 @@
 # tests
 
-# TODO
-# % convert -comment 'hello\nworld\n!' -depth 8 -size 512x512 xc:black black.pgm
+# TODO % convert -comment 'hello\nworld\n!' -depth 8 -size 512x512 xc:black
+# black.pgm
 
 # version/help
 foreach(cmd jplsinfo cjpls djpls)

@@ -83,7 +83,7 @@ check_symbol_exists(isatty "unistd.h" HAVE_ISATTY)
 
 set_property(SOURCE options.cpp PROPERTY COMPILE_DEFINITIONS HAVE_ISATTY)
 
-foreach(exe cjpls djpls jplsinfo)
+foreach(exe cjpls djpls jplsinfo jplstran)
   add_executable(
     ${exe}
     ${exe}.cpp

@@ -2,7 +2,7 @@
 find_program(PANDOC_EXECUTABLE pandoc)
 # TODO, reformat: pandoc -f markdown -t gfm clean.md
 
-foreach(manpage jplsinfo cjpls djpls)
+foreach(manpage jplsinfo cjpls djpls jplstran)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${manpage}.md.in
                  ${CMAKE_CURRENT_BINARY_DIR}/${manpage}.md @ONLY)
 

@@ -3,9 +3,9 @@
 #include "crc32.h"
 #include "jplsinfo_options.h"
 #include <charls/charls.h>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <iomanip>
 #include <vector>
 
 struct writer
@@ -104,29 +104,48 @@ private:
 
 namespace {
 // FIXME assume input is UTF-8:
-static std::string escape_json(const std::string &s) {
+static std::string escape_json(const std::string& s)
+{
     std::ostringstream o;
-    for (auto c = s.cbegin(); c != s.cend(); c++) {
-        switch (*c) {
-        case '"': o << "\\\""; break;
-        case '\\': o << "\\\\"; break;
-        case '\b': o << "\\b"; break;
-        case '\f': o << "\\f"; break;
-        case '\n': o << "\\n"; break;
-        case '\r': o << "\\r"; break;
-        case '\t': o << "\\t"; break;
+    for (auto c = s.cbegin(); c != s.cend(); c++)
+    {
+        switch (*c)
+        {
+        case '"':
+            o << "\\\"";
+            break;
+        case '\\':
+            o << "\\\\";
+            break;
+        case '\b':
+            o << "\\b";
+            break;
+        case '\f':
+            o << "\\f";
+            break;
+        case '\n':
+            o << "\\n";
+            break;
+        case '\r':
+            o << "\\r";
+            break;
+        case '\t':
+            o << "\\t";
+            break;
         default:
-            if ('\x00' <= *c && *c <= '\x1f') {
-                o << "\\u"
-                  << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(*c);
-            } else {
+            if ('\x00' <= *c && *c <= '\x1f')
+            {
+                o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(*c);
+            }
+            else
+            {
                 o << *c;
             }
         }
     }
     return o.str();
 }
-}
+} // namespace
 
 struct json_writer : writer
 {
@@ -572,7 +591,7 @@ int main(int argc, char* argv[])
     }
     catch (...)
     {
-        std::cerr << "unknown exception during options parsing" << std::endl;
+        std::cerr << "unknown exception during info dumping" << std::endl;
         return EXIT_FAILURE;
     }
 
