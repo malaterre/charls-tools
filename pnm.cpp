@@ -189,5 +189,5 @@ static const format* get()
     return &pnm_;
 }
 
-static bool b = factory::instance().registerFormat(get());
+static bool b = factory::instance().register_format(get());
 } // namespace jlst

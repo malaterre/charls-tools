@@ -88,11 +88,33 @@ bool tran_options::process(int argc, char* argv[])
         if (vm.count("crop"))
         {
             type = transform_type::crop;
+            region.Width = region_tuple.values[0];
+            region.Height = region_tuple.values[1];
+            region.X = region_tuple.values[2];
+            region.Y = region_tuple.values[3];
         }
         else if (vm.count("flip"))
-            type = transform_type::rotate;
+        {
+            type = transform_type::flip;
+            if (flip == "vertical")
+            {
+                vertical = true;
+            }
+            else if (flip == "horizontal")
+            {
+                vertical = false;
+            }
+            else
+            {
+                throw std::runtime_error("flip:" + flip);
+            }
+        }
         else if (vm.count("rotate"))
+        {
             type = transform_type::rotate;
+            if (degree != 90 && degree != 180 && degree != 270)
+                throw std::runtime_error("rotate:" + degree);
+        }
         else if (vm.count("transpose"))
             type = transform_type::transpose;
         else if (vm.count("transverse"))
@@ -105,7 +127,6 @@ bool tran_options::process(int argc, char* argv[])
             region.X = region_tuple.values[2];
             region.Y = region_tuple.values[3];
         }
-
     } // namespace boost::program_options;
     return true;
 }

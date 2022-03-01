@@ -12,7 +12,7 @@ class factory
 {
 public:
     static factory& instance();
-    bool registerFormat(const format* f, float priority = 0.5);
+    bool register_format(const format* f, float priority = 0.5);
     format* get_format_from_type(std::string const& type) const;
     format* detect_format(source& s) const;
 

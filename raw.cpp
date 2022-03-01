@@ -112,5 +112,5 @@ static const format* get()
     return &raw_;
 }
 // set priority to 0 so that `raw` is always tested last
-static bool b = factory::instance().registerFormat(get(), 0);
+static bool b = factory::instance().register_format(get(), 0);
 } // namespace jlst

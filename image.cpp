@@ -5,6 +5,7 @@
 #include "utils.h"
 
 #include <cassert>
+#include <cstring>   // memset
 #include <stdexcept> // for invalid_argument
 
 namespace jlst {
@@ -78,36 +79,180 @@ std::vector<uint8_t> image::transform(charls::interleave_mode const& interleave_
 
 std::vector<uint8_t> image::crop(uint32_t X, uint32_t Y, uint32_t width, uint32_t height)
 {
-}
-std::vector<uint8_t> image::flip(bool vertical)
-{
-}
-std::vector<uint8_t> image::rotate(int degree)
-{
-}
-std::vector<uint8_t> image::transpose()
-{
-}
-std::vector<uint8_t> image::transverse()
-{
-}
-std::vector<uint8_t> image::wipe(uint32_t X, uint32_t Y, uint32_t width, uint32_t height)
-{
+    assert(get_image_data().stride() == 0);
     auto& frame_info = get_image_info().frame_info();
     auto& inbuffer = get_image_data().pixel_data();
     std::vector<uint8_t> out;
-    out.resize(inbuffer.size());
+    size_t nbytes = frame_info.component_count * ((frame_info.bits_per_sample + 7) / 8);
+    out.resize(width * height * nbytes);
+    auto inwidth = frame_info.width;
     for (uint32_t y{}; y != frame_info.height; ++y)
     {
         for (uint32_t x{}; x != frame_info.width; ++x)
         {
             if ((x >= X && x < X + width) && (y >= Y && y < Y + height))
             {
-                out[y * width + x] = 0;
+                std::memcpy(&out[(y - Y) * width * nbytes + (x - X) * nbytes], &inbuffer[y * inwidth * nbytes + x * nbytes],
+                            nbytes);
+            }
+        }
+    }
+    return out;
+}
+std::vector<uint8_t> image::flip(bool vertical)
+{
+    assert(get_image_data().stride() == 0);
+    auto& frame_info = get_image_info().frame_info();
+    auto& inbuffer = get_image_data().pixel_data();
+    std::vector<uint8_t> out;
+    out.resize(inbuffer.size());
+    size_t nbytes = frame_info.component_count * ((frame_info.bits_per_sample + 7) / 8);
+    auto inheigth = frame_info.height;
+    auto inwidth = frame_info.width;
+    if (vertical)
+    {
+        for (uint32_t y{}; y != frame_info.height; ++y)
+        {
+            std::memcpy(&out[y * inwidth * nbytes], &inbuffer[(inheigth - y - 1) * inwidth * nbytes], nbytes * inwidth);
+        }
+    }
+    else
+    {
+        // horizontal
+        for (uint32_t y{}; y != frame_info.height; ++y)
+        {
+            for (uint32_t x{}; x != frame_info.width; ++x)
+            {
+                std::memcpy(&out[y * inwidth * nbytes + x * nbytes],
+                            &inbuffer[y * inwidth * nbytes + (inwidth - x - 1) * nbytes], nbytes);
+            }
+        }
+    }
+    return out;
+}
+std::vector<uint8_t> image::rotate(int degree)
+{
+    assert(degree == 90 || degree == 180 || degree == 270);
+    assert(get_image_data().stride() == 0);
+    auto& frame_info = get_image_info().frame_info();
+    auto& inbuffer = get_image_data().pixel_data();
+    std::vector<uint8_t> out;
+    out.resize(inbuffer.size());
+    size_t nbytes = frame_info.component_count * ((frame_info.bits_per_sample + 7) / 8);
+    if (degree == 90)
+    {
+        auto oldheight = frame_info.height;
+        auto oldwidth = frame_info.width;
+        auto newheight = frame_info.width;
+        auto newwidth = frame_info.height;
+
+        for (uint32_t y{}; y != newheight; ++y)
+        {
+            for (uint32_t x{}; x != newwidth; ++x)
+            {
+                std::memcpy(&out[y * newwidth * nbytes + x * nbytes],
+                            &inbuffer[(oldheight - x - 1) * oldwidth * nbytes + y * nbytes], nbytes);
+            }
+        }
+    }
+    else if (degree == 180)
+    {
+        auto oldheight = frame_info.height;
+        auto oldwidth = frame_info.width;
+        for (uint32_t y{}; y != oldheight; ++y)
+        {
+            for (uint32_t x{}; x != oldwidth; ++x)
+            {
+                std::memcpy(&out[y * oldwidth * nbytes + x * nbytes],
+                            &inbuffer[(oldheight - y - 1) * oldwidth * nbytes + (oldwidth - x - 1) * nbytes], nbytes);
+            }
+        }
+    }
+    else if (degree == 270)
+    {
+        auto oldheight = frame_info.height;
+        auto oldwidth = frame_info.width;
+        auto newheight = frame_info.width;
+        auto newwidth = frame_info.height;
+
+        for (uint32_t y{}; y != newheight; ++y)
+        {
+            for (uint32_t x{}; x != newwidth; ++x)
+            {
+                std::memcpy(&out[y * newwidth * nbytes + x * nbytes],
+                            &inbuffer[x * oldwidth * nbytes + (oldwidth - y - 1) * nbytes], nbytes);
+            }
+        }
+    }
+    return out;
+}
+std::vector<uint8_t> image::transpose()
+{
+    assert(get_image_data().stride() == 0);
+    auto& frame_info = get_image_info().frame_info();
+    auto& inbuffer = get_image_data().pixel_data();
+    std::vector<uint8_t> out;
+    out.resize(inbuffer.size());
+    size_t nbytes = frame_info.component_count * ((frame_info.bits_per_sample + 7) / 8);
+
+    auto oldheight = frame_info.height;
+    auto oldwidth = frame_info.width;
+    auto newheight = frame_info.width;
+    auto newwidth = frame_info.height;
+
+    for (uint32_t y{}; y != newheight; ++y)
+    {
+        for (uint32_t x{}; x != newwidth; ++x)
+        {
+            std::memcpy(&out[y * newwidth * nbytes + x * nbytes], &inbuffer[x * oldwidth * nbytes + y * nbytes], nbytes);
+        }
+    }
+    return out;
+}
+std::vector<uint8_t> image::transverse()
+{
+    assert(get_image_data().stride() == 0);
+    auto& frame_info = get_image_info().frame_info();
+    auto& inbuffer = get_image_data().pixel_data();
+    std::vector<uint8_t> out;
+    out.resize(inbuffer.size());
+    size_t nbytes = frame_info.component_count * ((frame_info.bits_per_sample + 7) / 8);
+
+    auto oldheight = frame_info.height;
+    auto oldwidth = frame_info.width;
+    auto newheight = frame_info.width;
+    auto newwidth = frame_info.height;
+
+    for (uint32_t y{}; y != newheight; ++y)
+    {
+        for (uint32_t x{}; x != newwidth; ++x)
+        {
+            std::memcpy(&out[y * newwidth * nbytes + x * nbytes],
+                        &inbuffer[(oldheight - x - 1) * oldwidth * nbytes + (oldwidth - y - 1) * nbytes], nbytes);
+        }
+    }
+    return out;
+}
+std::vector<uint8_t> image::wipe(uint32_t X, uint32_t Y, uint32_t width, uint32_t height)
+{
+    assert(get_image_data().stride() == 0);
+    auto& frame_info = get_image_info().frame_info();
+    auto& inbuffer = get_image_data().pixel_data();
+    std::vector<uint8_t> out;
+    out.resize(inbuffer.size());
+    size_t nbytes = frame_info.component_count * ((frame_info.bits_per_sample + 7) / 8);
+    auto inwidth = frame_info.width;
+    for (uint32_t y{}; y != frame_info.height; ++y)
+    {
+        for (uint32_t x{}; x != frame_info.width; ++x)
+        {
+            if ((x >= X && x < X + width) && (y >= Y && y < Y + height))
+            {
+                std::memset(&out[y * inwidth * nbytes + x * nbytes], 0, nbytes);
             }
             else
             {
-                out[y * width + x] = inbuffer[y + width + x];
+                std::memcpy(&out[y * inwidth * nbytes + x * nbytes], &inbuffer[y * inwidth * nbytes + x * nbytes], nbytes);
             }
         }
     }

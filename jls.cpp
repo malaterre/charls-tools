@@ -179,14 +179,17 @@ static void patch_header(std::vector<uint8_t>& v, int near)
             ++it;
             if (it != v.end() && *it == 0xda)
             {
+                ++it;
                 pos = it - v.begin();
             }
         }
     }
-    if (pos != 0)
-    {
-        v[pos + 6] = near;
-    }
+    if (pos == 0)
+        throw std::runtime_error("cannot find scan header");
+    // Ls:
+    uint16_t ls = v[pos + 0] << 8 | v[pos + 1];
+
+    v[pos + 9] = near;
 }
 } // end namespace
 
@@ -204,7 +207,46 @@ void jls::transform(dest& d, source& s, const tran_options& to) const
     jo.standard_spiff_header = decoder.spiff_header_has_value();
 
     jlst::image output_image;
-    if (to.type == tran_options::transform_type::wipe)
+    if (to.type == tran_options::transform_type::crop)
+    {
+        output_image.get_image_info() = input_image.get_image_info();
+        auto& region = to.region;
+        output_image.get_image_info().frame_info().width = region.Width;
+        output_image.get_image_info().frame_info().height = region.Height;
+        output_image.get_image_data().pixel_data() = input_image.crop(region.X, region.Y, region.Width, region.Height);
+    }
+    else if (to.type == tran_options::transform_type::flip)
+    {
+        output_image.get_image_info() = input_image.get_image_info();
+        output_image.get_image_data().pixel_data() = input_image.flip(to.vertical);
+    }
+    else if (to.type == tran_options::transform_type::rotate)
+    {
+        output_image.get_image_info() = input_image.get_image_info();
+        if (to.degree == 90 || to.degree == 270)
+        {
+            output_image.get_image_info().frame_info().width = input_image.get_image_info().frame_info().height;
+            output_image.get_image_info().frame_info().height = input_image.get_image_info().frame_info().width;
+        }
+        output_image.get_image_data().pixel_data() = input_image.rotate(to.degree);
+    }
+    else if (to.type == tran_options::transform_type::transpose)
+    {
+        output_image.get_image_info() = input_image.get_image_info();
+        output_image.get_image_info().frame_info().width = input_image.get_image_info().frame_info().height;
+        output_image.get_image_info().frame_info().height = input_image.get_image_info().frame_info().width;
+
+        output_image.get_image_data().pixel_data() = input_image.transpose();
+    }
+    else if (to.type == tran_options::transform_type::transverse)
+    {
+        output_image.get_image_info() = input_image.get_image_info();
+        output_image.get_image_info().frame_info().width = input_image.get_image_info().frame_info().height;
+        output_image.get_image_info().frame_info().height = input_image.get_image_info().frame_info().width;
+
+        output_image.get_image_data().pixel_data() = input_image.transverse();
+    }
+    else if (to.type == tran_options::transform_type::wipe)
     {
         output_image.get_image_info() = input_image.get_image_info();
         auto& region = to.region;
@@ -212,10 +254,10 @@ void jls::transform(dest& d, source& s, const tran_options& to) const
     }
     else
     {
-        throw std::runtime_error("todo");
+        throw std::runtime_error("wotsit");
     }
     auto encoded_buffer{compress(output_image, jo)};
-    patch_header(encoded_buffer, decoder.near_lossless());
+    //    patch_header(encoded_buffer, decoder.near_lossless());
     d.write(encoded_buffer.data(), encoded_buffer.size());
 }
 
@@ -229,5 +271,5 @@ static const format* get()
     static const jls jls_;
     return &jls_;
 }
-static bool b = factory::instance().registerFormat(get(), 1);
+static bool b = factory::instance().register_format(get(), 1);
 } // namespace jlst

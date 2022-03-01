@@ -5,7 +5,7 @@
 #include "image.h"
 
 namespace jlst {
-bool factory::registerFormat(const format* f, float priority)
+bool factory::register_format(const format* f, float priority)
 {
 #if 0
     auto p = std::clamp(priority, 0, 1); // c++17

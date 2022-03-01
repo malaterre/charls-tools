@@ -28,6 +28,27 @@ jplstran – lossless transformation for JPEG-LS files
 **-o**, **--output**
 :   Specify the output file(s) to write.
 
+**--flip** horizontal
+:   Mirror image horizontally (left-right).
+
+**--flip** vertical
+:   Mirror image vertically (top-bottom).
+
+**--rotate** 90
+:   Rotate image 90 degrees clockwise.
+
+**--rotate** 180
+:   Rotate image 180 degrees.
+
+**--rotate** 270
+:   Rotate image 270 degrees clockwise (or 90 ccw).
+
+**--transpose**
+:   Transpose image (across UL-to-LR axis).
+
+**--transverse**
+:   Transverse transpose (across UR-to-LL axis).
+
 # COPYRIGHT
 
 BSD-3-Clause

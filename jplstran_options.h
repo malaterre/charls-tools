@@ -21,6 +21,7 @@ struct tran_options final : options
     };
     transform_type type{};
     int degree{};
+    bool vertical{};
     struct
     {
         uint32_t X;
