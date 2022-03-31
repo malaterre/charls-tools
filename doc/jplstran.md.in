@@ -55,6 +55,9 @@ jplstran – lossless transformation for JPEG-LS files
 **--wipe**
 :   Wipe WxH+X+Y
 
+**--jai**
+:   Fix JPEG-LS header (JAI bug)
+
 # COPYRIGHT
 
 BSD-3-Clause

@@ -29,6 +29,7 @@ struct tran_options final : options
         uint32_t Width;
         uint32_t Height;
     } region;
+    bool jai{};
 
     /**
      * Returns false when the process should stop, ie `help` or `version` was passed.

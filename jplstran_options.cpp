@@ -31,6 +31,7 @@ bool tran_options::process(int argc, char* argv[])
             ("transpose", "transpose")                                            // transpose
             ("transverse", "transverse")                                          // transverse
             ("wipe", po::value(&region_tuple), "wipe WxH+X+Y")                    // crop
+            ("jai", po::value(&jai), "Fix JPEG-LS header (JAI bug)")              // JAI
             ;
 
         po::positional_options_description p;

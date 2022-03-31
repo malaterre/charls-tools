@@ -21,6 +21,7 @@ public:
     void write_data(dest& d, const image& i, const jls_options& jo) const override;
 
     void transform(dest& d, source& s, const tran_options& jo) const;
+    void fix_jai(dest& d, source& s) const;
 
 private:
     charls::jpegls_decoder decoder_;

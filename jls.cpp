@@ -169,7 +169,7 @@ void jls::write_data(dest& fs, const image& i, const jls_options& jo) const
 }
 
 namespace {
-static void patch_header(std::vector<uint8_t>& v, int near)
+static size_t find_marker(std::vector<uint8_t>& v, uint8_t marker)
 {
     size_t pos = 0;
     for (auto it = v.begin(); it != v.end(); ++it)
@@ -177,7 +177,7 @@ static void patch_header(std::vector<uint8_t>& v, int near)
         if (*it == 0xff)
         {
             ++it;
-            if (it != v.end() && *it == 0xda)
+            if (it != v.end() && *it == marker)
             {
                 ++it;
                 pos = it - v.begin();
@@ -186,6 +186,12 @@ static void patch_header(std::vector<uint8_t>& v, int near)
     }
     if (pos == 0)
         throw std::runtime_error("cannot find scan header");
+    return pos;
+}
+
+static void patch_header(std::vector<uint8_t>& v, int near)
+{
+    auto pos = find_marker(v, 0xda);
     // Ls:
     uint16_t ls = v[pos + 0] << 8 | v[pos + 1];
     (void)ls;
@@ -194,6 +200,77 @@ static void patch_header(std::vector<uint8_t>& v, int near)
 }
 } // end namespace
 
+void jls::fix_jai(dest& d, source& s) const
+{
+    jlst::image input_image;
+    read_info(s, input_image);
+    int32_t bits_per_sample = input_image.get_image_info().frame_info().bits_per_sample;
+
+    // http://charls.codeplex.com/discussions/230307?ProjectName=charls
+    unsigned char marker_lse_13[] = {
+        0xFF, 0xF8, 0x00, 0x0D, //
+        0x01,                   //
+        0x1F, 0xFF,             //
+        0x00, 0x22,             // T1 = 34
+        0x00, 0x83,             // T2 = 131
+        0x02, 0x24,             // T3 = 548
+        0x00, 0x40              //
+    };
+
+    unsigned char marker_lse_14[] = {
+        0xFF, 0xF8, 0x00, 0x0D, //
+        0x01,                   //
+        0x3F, 0xFF,             //
+        0x00, 0x42,             // T1 = 66
+        0x01, 0x03,             // T2 = 259
+        0x04, 0x44,             // T3 = 1092
+        0x00, 0x40              //
+    };
+
+    unsigned char marker_lse_15[] = {
+        0xFF, 0xF8, 0x00, 0x0D, //
+        0x01,                   //
+        0x7F, 0xFF,             //
+        0x00, 0x82,             // T1 = 130
+        0x02, 0x03,             // T2 = 515
+        0x08, 0x84,             // T3 = 2180
+        0x00, 0x40              //
+    };
+
+    unsigned char marker_lse_16[] = {
+        0xFF, 0xF8, 0x00, 0x0D, //
+        0x01,                   //
+        0xFF, 0xFF,             //
+        0x01, 0x02,             // T1 = 258
+        0x04, 0x03,             // T2 = 1027
+        0x11, 0x04,             // T3 = 4356
+        0x00, 0x40              //
+    };
+
+    const unsigned char* marker_lse = nullptr;
+    switch (bits_per_sample)
+    {
+    case 13:
+        marker_lse = marker_lse_13;
+        break;
+    case 14:
+        marker_lse = marker_lse_14;
+        break;
+    case 15:
+        marker_lse = marker_lse_15;
+        break;
+    case 16:
+        marker_lse = marker_lse_16;
+        break;
+    }
+    s.rewind();
+    std::vector<uint8_t> encoded_source = s.read_bytes();
+    auto pos = find_marker(encoded_source, 0xda);
+    assert(pos == 0x0F + 2);
+    encoded_source.insert(encoded_source.begin() + pos - 2, marker_lse, marker_lse + 15);
+
+    d.write(encoded_source.data(), encoded_source.size());
+}
 void jls::transform(dest& d, source& s, const tran_options& to) const
 {
     jlst::image input_image;
