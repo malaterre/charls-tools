@@ -44,6 +44,13 @@ djpls – Decompress JPEG-LS files
 $ djpls input.jls output.pgm
 ```
 
+# CAVEATS
+
+Pay attention that `djpls` does not apply any color-transformation (unless
+expclitly stated in an APP8 marker). In particular it does not handle APP14
+(aka Adobe) marker. In other word, the output of djpls will be equivalent of
+`jpeg -c` behavior (libjpeg JPEG-LS implementation).
+
 # SEE ALSO
 
 jpeg(1)
