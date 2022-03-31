@@ -251,6 +251,7 @@ void jls::fix_jai(dest& d, source& s) const
         0x00, 0x40              //
     };
 
+    // this should only happen when frame_info_.bits_per_sample > 12
     const unsigned char* marker_lse = nullptr;
     switch (bits_per_sample)
     {
@@ -266,6 +267,10 @@ void jls::fix_jai(dest& d, source& s) const
     case 16:
         marker_lse = marker_lse_16;
         break;
+    }
+    if (!marker_lse)
+    {
+        throw std::runtime_error("Unsupported bits per sample");
     }
     s.rewind();
     std::vector<uint8_t> encoded_source = s.read_bytes();
