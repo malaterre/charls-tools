@@ -100,12 +100,14 @@ bool cjpls_options::process(int argc, char* argv[])
              "Planar configuration ('contig' or 'separate'), unless specified in the format header.") // planar configuration
             ;
 
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
         po::options_description encoding("Encoding options");
         encoding.add_options()                                         //
             ("even_destination_size", "even destination size")         //
             ("include_version_number", "include version number")       //
             ("include_pc_parameters_jai", "include pc parameters jai") //
             ;
+#endif
 
         po::options_description desc("Allowed options");
         desc.add_options()("help,h", "print usage message") // help
@@ -114,7 +116,9 @@ bool cjpls_options::process(int argc, char* argv[])
 
         desc.add(generic);
         desc.add(jpegls);
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
         desc.add(encoding);
+#endif
         desc.add(image);
 
         po::positional_options_description p;
@@ -205,31 +209,21 @@ bool cjpls_options::process(int argc, char* argv[])
         {
             planar_configuration = string_to_planar_configuration(planar_configuration_str.c_str());
         }
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
         if (vm.count("even_destination_size"))
         {
-#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
             jls_options_.encoding_options = jls_options_.encoding_options | charls::encoding_options::even_destination_size;
-#else
-            throw std::runtime_error("Argument even_destination_size is unhandled.\n");
-#endif
         }
         if (vm.count("include_version_number"))
         {
-#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
             jls_options_.encoding_options = jls_options_.encoding_options | charls::encoding_options::include_version_number;
-#else
-            throw std::runtime_error("Argument include_version_number is unhandled.\n");
-#endif
         }
         if (vm.count("include_pc_parameters_jai"))
         {
-#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
             jls_options_.encoding_options =
                 jls_options_.encoding_options | charls::encoding_options::include_pc_parameters_jai;
-#else
-            throw std::runtime_error("Argument include_pc_parameters_jai is unhandled.\n");
-#endif
         }
+#endif
     }
     return true;
 }

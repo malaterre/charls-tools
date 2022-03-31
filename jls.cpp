@@ -188,6 +188,7 @@ static void patch_header(std::vector<uint8_t>& v, int near)
         throw std::runtime_error("cannot find scan header");
     // Ls:
     uint16_t ls = v[pos + 0] << 8 | v[pos + 1];
+    (void)ls;
 
     v[pos + 9] = near;
 }
@@ -257,7 +258,11 @@ void jls::transform(dest& d, source& s, const tran_options& to) const
         throw std::runtime_error("wotsit");
     }
     auto encoded_buffer{compress(output_image, jo)};
-    //    patch_header(encoded_buffer, decoder.near_lossless());
+    if (decoder.near_lossless() != 0)
+    {
+        throw std::runtime_error("near lossless not handled");
+        patch_header(encoded_buffer, decoder.near_lossless());
+    }
     d.write(encoded_buffer.data(), encoded_buffer.size());
 }
 

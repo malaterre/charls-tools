@@ -15,7 +15,7 @@
 namespace jlst {
 bool pnm::handle_type(std::string const& type) const
 {
-    return type == "pgm" || type == "ppm";
+    return type == "pbm" || type == "pgm" || type == "ppm";
 }
 bool pnm::detect(source& s, image_info const&) const
 {
