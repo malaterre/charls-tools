@@ -1,18 +1,19 @@
-% DJPLS(1) djpls @JLST_VERSION@
-% Mathieu Malaterre
+% DJPLS(1) djpls @JLST_VERSION@ | JPEG-LS "CharLS" User Commands
+% Mathieu Malaterre <mathieu.malaterre@gmail.com>
 % @JLST_DATE@
 
 # NAME
 
-djpls – Decompress JPEG-LS files
+**djpls** – Decompress JPEG-LS image files
 
 # SYNOPSIS
 
-**djpls**␣*input.jls*␣*output.ext*
+| **djpls** _input.jls_ _output.ext_
+| **djpls** \[**-h**|**--help**|**-v**|**--version**]
 
 # DESCRIPTION
 
-**djpls** Command line to decompress file from JPEG-LS specification (aka ITU 87).
+**djpls** Command line to decompress file from JPEG-LS specification (ISO/IEC 14495-1:1999 / ITU-T.87).
 
 # OPTIONS
 
@@ -41,7 +42,7 @@ djpls – Decompress JPEG-LS files
 # EXAMPLES
 
 ```
-$ djpls input.jls output.pgm
+% djpls input.jls output.pgm
 ```
 
 # CAVEATS
@@ -51,9 +52,13 @@ expclitly stated in an APP8 marker). In particular it does not handle APP14
 (aka Adobe) marker. In other word, the output of djpls will be equivalent of
 `jpeg -c` behavior (libjpeg JPEG-LS implementation).
 
+# BUGS
+
+See GitHub Issues: <https://github.com/malaterre/charls-tools/issues>
+
 # SEE ALSO
 
-jpeg(1)
+**jpeg(1)**, **djpeg(1)**, **ppm(5)**, **pgm(5)**
 
 # COPYRIGHT
 

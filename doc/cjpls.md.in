@@ -1,18 +1,19 @@
-% CJPLS(1) cjpls @JLST_VERSION@
-% Mathieu Malaterre
+% CJPLS(1) cjpls @JLST_VERSION@ | JPEG-LS "CharLS" User Commands
+% Mathieu Malaterre <mathieu.malaterre@gmail.com>
 % @JLST_DATE@
 
 # NAME
 
-cjpls – Compress image file into JPEG-LS file
+**cjpls** – Compress image file into JPEG-LS file
 
 # SYNOPSIS
 
-**cjpls**␣*input.ext*␣*output.jls*
+| **cjpls** _input.ext_ _output.jls_
+| **cjpls** \[**-h**|**--help**|**-v**|**--version**]
 
 # DESCRIPTION
 
-**cjpls** Compress input image file into file using JPEG-LS specification (aka ITU 87).
+**cjpls** Compress input image file into file using JPEG-LS specification (ISO/IEC 14495-1:1999 / ITU-T.87).
 
 # OPTIONS
 
@@ -78,13 +79,13 @@ cjpls – Compress image file into JPEG-LS file
 # EXAMPLES
 
 ```
-$ cjpls input.pgm output.jls
+% cjpls input.pgm output.jls
 ```
 
 One can also use redirect:
 
 ```
-cjpls --type raw -s 512x512 -b 16 -c 3  < /dev/zero > zero.jls
+% cjpls --type raw -s 512x512 -b 16 -c 3  < /dev/zero > zero.jls
 ```
 
 # NOTES
@@ -98,9 +99,13 @@ default in the JPEG-LS file as COM marker.
   "comment" : "hello\nworld\n!"
 ```
 
+# BUGS
+
+See GitHub Issues: <https://github.com/malaterre/charls-tools/issues>
+
 # SEE ALSO
 
-jpeg(1)
+**jpeg(1)**, **cjpeg(1)**, **ppm(5)**, **pgm(5)**
 
 # COPYRIGHT
 

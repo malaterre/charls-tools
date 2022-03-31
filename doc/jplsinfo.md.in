@@ -1,18 +1,22 @@
-% JPLSINFO(1) jplsinfo @JLST_VERSION@
-% Mathieu Malaterre
+% JPLSINFO(1) jplsinfo @JLST_VERSION@ | JPEG-LS "CharLS" User Commands
+% Mathieu Malaterre <mathieu.malaterre@gmail.com>
 % @JLST_DATE@
 
 # NAME
 
-jplsinfo – print information about JPEG-LS files
+**jplsinfo** – print information about JPEG-LS files
 
 # SYNOPSIS
 
-**jplsinfo**␣[**--pretty**]␣[**--format**␣*format*]␣*input.jls*␣[*...*]
+| **jplsinfo** [**--pretty**] [**--format**␣*format*] _input.jls_ [*...*]
+| **jplsinfo** \[**-h**|**--help**|**-v**|**--version**]
 
 # DESCRIPTION
 
-**jplsinfo** displays information about files created according to the JPEG-LS specification (aka ITU 87). By default, the SPIFF header is printed, then the actual JPEG-LS header and eventually a hash sum of the image.
+**jplsinfo** displays information about files created according to the JPEG-LS
+specification (ISO/IEC 14495-1:1999 / ITU-T.87). By default, the SPIFF header
+is printed, then the actual JPEG-LS header and eventually a hash sum of the
+image.
 
 # OPTIONS
 
@@ -91,6 +95,14 @@ header:
     reset_value: 64
     color_transformation: none
 ```
+
+# BUGS
+
+See GitHub Issues: <https://github.com/malaterre/charls-tools/issues>
+
+# SEE ALSO
+
+**tiffinfo(1)**
 
 # COPYRIGHT
 

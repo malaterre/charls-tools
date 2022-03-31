@@ -1,18 +1,20 @@
-% JPLSINFO(1) jplstran @JLST_VERSION@
-% Mathieu Malaterre
+% JPLSTRAN(1) jplstran @JLST_VERSION@ | JPEG-LS "CharLS" User Commands
+% Mathieu Malaterre <mathieu.malaterre@gmail.com>
 % @JLST_DATE@
 
 # NAME
 
-jplstran – lossless transformation for JPEG-LS files
+**jplstran** – lossless transformation for JPEG-LS files
 
 # SYNOPSIS
 
-**jplstran**␣*input.jls*␣*output.jls*
+| **jplstran** _input.jls_ _output.jls_
+| **jplstran** \[**-h**|**--help**|**-v**|**--version**]
 
 # DESCRIPTION
 
-**jplstran** Execute lossless transformation on JPEG-LS file. In particular it will not change image buffer where NEAR != 0
+**jplstran** Execute lossless transformation on JPEG-LS (ISO/IEC 14495-1:1999 /
+ITU-T.87) file. In particular it will not change image buffer where NEAR != 0.
 
 # OPTIONS
 
@@ -57,6 +59,14 @@ jplstran – lossless transformation for JPEG-LS files
 
 **--jai**
 :   Fix JPEG-LS header (JAI bug)
+
+# BUGS
+
+See GitHub Issues: <https://github.com/malaterre/charls-tools/issues>
+
+# SEE ALSO
+
+**jpegtran(1)**
 
 # COPYRIGHT
 
