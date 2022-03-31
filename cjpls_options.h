@@ -14,7 +14,7 @@ struct jls_options final
     int near_lossless{};
     charls::jpegls_pc_parameters preset_coding_parameters{};
     charls::color_transformation color_transformation{};
-    bool standard_spiff_header{};
+    bool standard_spiff_header{true};
 #if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
     charls::encoding_options encoding_options{};
 #endif
