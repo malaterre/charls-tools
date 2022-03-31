@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(
   JLST # charls-tools is too long to type
-  VERSION 0.1
+  VERSION 0.2
   DESCRIPTION "CharLS Tools"
   HOMEPAGE_URL "https://github.com/malaterre/charls-tools"
   LANGUAGES CXX)

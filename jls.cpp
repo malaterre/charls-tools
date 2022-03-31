@@ -119,13 +119,6 @@ static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& 
     {
         encoder.encoding_options(options.encoding_options);
     }
-    {
-        // the following writes an extra \0
-        // encoder.write_comment(image.get_image_info().comment().c_str());
-        auto& comment = img.get_image_info().comment();
-        if (!comment.empty())
-            encoder.write_comment(comment.c_str(), comment.size());
-    }
 #endif
 
     // setup encoder using input image:
@@ -141,6 +134,17 @@ static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& 
             frame_info.component_count == 1 ? charls::spiff_color_space::grayscale : charls::spiff_color_space::rgb;
         encoder.write_standard_spiff_header(spiff_color_space);
     }
+
+    // Now that write_standard_spiff_header has been called, it is safe to call write_comment:
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
+    {
+        // the following writes an extra \0
+        // encoder.write_comment(image.get_image_info().comment().c_str());
+        auto& comment = img.get_image_info().comment();
+        if (!comment.empty())
+            encoder.write_comment(comment.c_str(), comment.size());
+    }
+#endif
 
     const auto transform_pixel_data{img.transform(options.interleave_mode)};
     size_t encoded_size;
