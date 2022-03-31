@@ -15,7 +15,7 @@
 namespace jlst {
 bool pnm::handle_type(std::string const& type) const
 {
-    return type == "pbm" || type == "pgm" || type == "ppm";
+    return type == "pgm" || type == "ppm";
 }
 bool pnm::detect(source& s, image_info const&) const
 {
@@ -60,6 +60,10 @@ void pnm::read_info(source& fs, image& i) const
     auto& ii = i.get_image_info();
     std::string str;
     str = fs.getline();
+    if (str == "P4")
+    {
+        throw std::invalid_argument("Single bit is not supported in JPEG-LS");
+    }
     if (str != "P5" && str != "P6")
     {
         throw std::invalid_argument(str);
