@@ -80,7 +80,7 @@ bool tran_options::process(int argc, char* argv[])
         catch (std::exception&)
         {
             // default value missing. Let's print usage before re-throw:
-            std::cout << "usage: jplstran [options] input\n";
+            std::cout << "usage: jplstran [options] input.jls output.jls\n";
             std::cout << desc << std::endl;
             throw;
         }

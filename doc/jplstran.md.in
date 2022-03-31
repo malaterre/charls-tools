@@ -28,6 +28,9 @@ jplstran – lossless transformation for JPEG-LS files
 **-o**, **--output**
 :   Specify the output file(s) to write.
 
+**--crop**
+:   Crop WxH+X+Y
+
 **--flip** horizontal
 :   Mirror image horizontally (left-right).
 
@@ -48,6 +51,9 @@ jplstran – lossless transformation for JPEG-LS files
 
 **--transverse**
 :   Transverse transpose (across UR-to-LL axis).
+
+**--wipe**
+:   Wipe WxH+X+Y
 
 # COPYRIGHT
 

@@ -22,17 +22,31 @@ djpls – Decompress JPEG-LS files
 **--version**
 :   Display the current version of charls-tools as well as the underlying charls version used.
 
+## Generic options (required when no redirects):
+
 **-i**, **--input**
 :   Specify the input file(s) to read.
 
 **-o**, **--output**
 :   Specify the output file(s) to write.
 
+**--type**
+:   Output type (pgm, raw...).
+
+## Image output options:
+
+**-p**, **--planar_configuration**
+:   Planar configuration ('contig' or 'separate', unless specified in the format header.
+
 # EXAMPLES
 
 ```
 $ djpls input.jls output.pgm
 ```
+
+# SEE ALSO
+
+jpeg(1)
 
 # COPYRIGHT
 

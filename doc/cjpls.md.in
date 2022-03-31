@@ -22,17 +22,68 @@ cjpls – Compress image file into JPEG-LS file
 **--version**
 :   Display the current version of charls-tools as well as the underlying charls version used.
 
+## Generic options (required when no redirects):
+
 **-i**, **--input**
 :   Specify the input file(s) to read.
 
 **-o**, **--output**
 :   Specify the input file(s) to write.
 
+**--type**
+:   Input type (pgm, raw...)
+
+## JPEG-LS output options:
+
+**-m**, **--interleave_mode**
+:   Output interleave mode: `none|line|sample`. Default to input format if not specified.
+
+**-n**, **--near_lossless**
+:   Near lossless value
+
+**-k**, **--preset_coding_parameters**
+:   Preset coding parameters: maximum_sample_value, threshold1, threshold2, threshold3, reset_value
+
+**--standard_spiff_header**
+:   Write a standard spiff header: 'yes'/'no'.
+
+**-t**, **--color_transformation**
+:   Color transformation: `none|hp1|hp2|hp3` (HP extension).
+
+## Encoding options:
+
+**--even_destination_size**
+:   Even destination size
+
+**--include_version_number**
+:   Include version number
+
+**--include_pc_parameters_jai**
+:   Include pc parameters jai
+
+## Image input options:
+
+**-s**, **--size**
+:   Size of image (width, height), unless specified in the format header.
+
+**-b**, **--bits_per_sample**
+:   Bits per sample value, unless specified in the format header.
+
+**-c**, **--component_count**
+:   Component count, unless specified in the format header.
+
+**-p**, **--planar_configuration**
+:   Planar configuration ('contig' or 'separate'), unless specified in the format header.
+
 # EXAMPLES
 
 ```
 $ cjpls input.pgm output.jls
 ```
+
+# SEE ALSO
+
+jpeg(1)
 
 # COPYRIGHT
 
