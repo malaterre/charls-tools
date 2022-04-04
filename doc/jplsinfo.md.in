@@ -85,7 +85,7 @@ header:
     height: 512
     bits_per_sample: 16
     component_count: 1
-    near_lossless: 0
+  near_lossless: 0
   interleave_mode: none
   preset_coding_parameters:
     maximum_sample_value: 65535
@@ -93,7 +93,7 @@ header:
     threshold2: 67
     threshold3: 276
     reset_value: 64
-    color_transformation: none
+  color_transformation: none
 ```
 
 # BUGS

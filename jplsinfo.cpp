@@ -87,8 +87,10 @@ struct yaml_writer : writer
         pop();
         print_tab(os);
     }
-    void print_value_separator(std::ostream&, bool) override
+    void print_value_separator(std::ostream& os, bool eol) override
     {
+        if (!eol)
+            os << '\n';
     }
     void print_string(std::ostream& os, std::string const& key, std::string const& val, bool) override
     {
@@ -96,7 +98,6 @@ struct yaml_writer : writer
         os << ':';
         os << ' ';
         os << val;
-        os << '\n';
     }
 
 private:
@@ -594,7 +595,6 @@ int main(int argc, char* argv[])
         std::cerr << "unknown exception during info dumping" << std::endl;
         return EXIT_FAILURE;
     }
-
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
