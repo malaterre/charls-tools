@@ -15,7 +15,7 @@
 namespace jlst {
 bool pnm::handle_type(std::string const& type) const
 {
-    return type == "pgm" || type == "ppm";
+    return type == "pam" || type == "pgm" || type == "ppm";
 }
 bool pnm::detect(source& s, image_info const&) const
 {
@@ -64,10 +64,11 @@ void pnm::read_info(source& fs, image& i) const
     {
         throw std::invalid_argument("Single bit is not supported in JPEG-LS");
     }
-    if (str != "P5" && str != "P6")
+    if (str != "P5" && str != "P6" && str != "P7")
     {
         throw std::invalid_argument(str);
     }
+    bool ispam = false;
     // component count:
     if (str[1] == '5')
     {
@@ -79,6 +80,10 @@ void pnm::read_info(source& fs, image& i) const
         ii.frame_info().component_count = 3;
         ii.interleave_mode() = charls::interleave_mode::sample;
     }
+    else if (str[1] == '7')
+    {
+        ispam = true;
+    }
     // multi-line comment:
     std::string comment;
     while (fs.peek() == '#')
@@ -89,21 +94,83 @@ void pnm::read_info(source& fs, image& i) const
         comment += pnm_trim_comment(str);
     }
     ii.comment() = comment;
-    // width / height:
-    str = fs.getline();
+    if (ispam)
     {
-        std::stringstream ss(str);
-        auto w = parse_u32(ss);
-        auto h = parse_u32(ss);
-        ii.frame_info().width = w;
-        ii.frame_info().height = h;
+        do
+        {
+            str = fs.getline();
+            if (str.rfind("WIDTH", 0) == 0)
+            {
+                std::istringstream iss(str);
+                iss >> str;
+                long long ll;
+                iss >> ll;
+                ii.frame_info().width = ll;
+            }
+            else if (str.rfind("HEIGHT", 0) == 0)
+            {
+                std::istringstream iss(str);
+                iss >> str;
+                long long ll;
+                iss >> ll;
+                ii.frame_info().height = ll;
+            }
+            else if (str.rfind("MAXVAL", 0) == 0)
+            {
+                // bits per sample:
+                std::stringstream ss(str);
+                ss >> str;
+                auto bps = parse_u32(ss);
+                ii.frame_info().bits_per_sample = log2(bps);
+            }
+            else if (str.rfind("TUPLTYPE", 0) == 0)
+            {
+                // wotsit ?
+            }
+            else if (str.rfind("DEPTH", 0) == 0)
+            {
+                std::istringstream iss(str);
+                iss >> str;
+                long long ll;
+                iss >> ll;
+                if (ll == 1)
+                {
+                    ii.frame_info().component_count = ll;
+                    ii.interleave_mode() = charls::interleave_mode::none;
+                }
+                else if (ll == 3)
+                {
+                    ii.frame_info().component_count = ll;
+                    ii.interleave_mode() = charls::interleave_mode::sample;
+                }
+                else
+                    throw std::invalid_argument(std::to_string(ll));
+            }
+            else if (str.rfind("ENDHDR", 0) == 0)
+            {
+            }
+            else
+                throw std::invalid_argument(str);
+        } while (str.rfind("ENDHDR", 0) != 0);
     }
-    // bits per sample:
-    str = fs.getline();
+    else
     {
-        std::stringstream ss(str);
-        auto bps = parse_u32(ss);
-        ii.frame_info().bits_per_sample = log2(bps);
+        // width / height:
+        str = fs.getline();
+        {
+            std::stringstream ss(str);
+            auto w = parse_u32(ss);
+            auto h = parse_u32(ss);
+            ii.frame_info().width = w;
+            ii.frame_info().height = h;
+        }
+        // bits per sample:
+        str = fs.getline();
+        {
+            std::stringstream ss(str);
+            auto bps = parse_u32(ss);
+            ii.frame_info().bits_per_sample = log2(bps);
+        }
     }
     // now is a good time to compute stride:
     auto const bytes_per_sample{(ii.frame_info().bits_per_sample + 7) / 8};
