@@ -174,6 +174,20 @@ static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& 
         // user wants to override default interleave mode:
         interleave_mode = options.interleave_mode;
     }
+    auto color_transformation = charls::color_transformation::none;
+    bool coltra_none = false;
+    if (options.has_color_transformation)
+    {
+        // for consistency with charls implementation, make sure that only 8 and 16 are acceptable:
+        if (frame_info.bits_per_sample != 8 && frame_info.bits_per_sample != 16)
+            throw std::invalid_argument("Invalid bits per sample.");
+        if (frame_info.component_count != 3)
+            throw std::invalid_argument("Invalid color_transformation. Do not specify any.");
+        // user wants to override default color transformation:
+        color_transformation = options.color_transformation;
+        // only in this case force writing of APP8 + none:
+        coltra_none = color_transformation == charls::color_transformation::none;
+    }
 
     charls::jpegls_encoder encoder;
 
@@ -182,7 +196,7 @@ static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& 
         .interleave_mode(interleave_mode)                           // interleave_mode
         .near_lossless(options.near_lossless)                       // near_lossless
         .preset_coding_parameters(options.preset_coding_parameters) // preset_coding_parameters
-        .color_transformation(options.color_transformation);        // color_transformation
+        .color_transformation(color_transformation);                // color_transformation (hp1 & hp2)
 
 #if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
     {
@@ -213,6 +227,19 @@ static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& 
         if (!comment.empty())
             encoder.write_comment(comment.c_str(), comment.size());
     }
+#endif
+
+    // app marker was introduced after release 2.3.4:
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 3)
+    // write APP8 after COM, but before SOF55 (charls will write APP8 after SOF55)
+    if (coltra_none)
+    {
+        // in the special case 'none', charls will not write APP8 marker. So handle it manually here:
+        const char mrfx[] = "mrfx"; // the trailing nul byte is actually the 'none' color transformation
+        encoder.write_application_data(8, mrfx, sizeof(mrfx));
+    }
+#else
+    (void)coltra_none;
 #endif
 
     const auto transform_pixel_data{img.transform(options.interleave_mode)};

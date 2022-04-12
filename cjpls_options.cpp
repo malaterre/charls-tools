@@ -184,6 +184,7 @@ bool cjpls_options::process(int argc, char* argv[])
 
         if (vm.count("color_transformation"))
         {
+            jls_options_.has_color_transformation = true;
             jls_options_.color_transformation = string_to_color_transformation(color_transformation_str.c_str());
         }
         if (vm.count("interleave_mode"))

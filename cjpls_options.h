@@ -14,6 +14,7 @@ struct jls_options final
     charls::interleave_mode interleave_mode{};
     int near_lossless{};
     charls::jpegls_pc_parameters preset_coding_parameters{};
+    bool has_color_transformation{};
     charls::color_transformation color_transformation{};
     bool standard_spiff_header{true};
 #if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 2)
