@@ -179,6 +179,7 @@ void jls::write_data(dest& fs, const image& i, const jls_options& jo) const
 }
 
 namespace {
+// find the *first* matching marker
 static size_t find_marker(std::vector<uint8_t>& v, uint8_t marker)
 {
     size_t pos = 0;
@@ -191,6 +192,7 @@ static size_t find_marker(std::vector<uint8_t>& v, uint8_t marker)
             {
                 ++it;
                 pos = it - v.begin();
+                break;
             }
         }
     }
