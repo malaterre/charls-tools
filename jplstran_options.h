@@ -29,8 +29,8 @@ struct tran_options final : options
         uint32_t Width;
         uint32_t Height;
     } region;
-    bool jai{};
-    bool spiff{};
+    bool jai_imageio{};
+    bool standard_spiff_header{};
 
     /**
      * Returns false when the process should stop, ie `help` or `version` was passed.

@@ -31,8 +31,10 @@ bool tran_options::process(int argc, char* argv[])
             ("transpose", "transpose")                                            // transpose
             ("transverse", "transverse")                                          // transverse
             ("wipe", po::value(&region_tuple), "wipe WxH+X+Y")                    // crop
-            ("jai", po::value(&jai), "Fix JPEG-LS header (JAI bug)")              // JAI
-            ("spiff", po::value(&spiff), "Add SPIFF header to bare codestream")   // SPIFF
+            ("jai_imageio", po::value(&jai_imageio),
+             "Fix JPEG-LS header (JAI-ImageIO bug)") // JAI-ImageIO
+            ("standard_spiff_header", po::value(&standard_spiff_header),
+             "Write a standard spiff header: 'yes'/'no'.") // spiff header
             ;
 
         po::positional_options_description p;

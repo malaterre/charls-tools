@@ -12,13 +12,13 @@
 
 static void transform(jlst::tran_options& options)
 {
-    if (options.jai)
+    if (options.jai_imageio)
     {
         jlst::jls* ptr = new jlst::jls;
         std::unique_ptr<jlst::jls> jls_format(ptr);
         jls_format->fix_jai(options.get_dest(0), options.get_source(0));
     }
-    else if (options.spiff)
+    else if (options.standard_spiff_header)
     {
         jlst::jls* ptr = new jlst::jls;
         std::unique_ptr<jlst::jls> jls_format(ptr);
