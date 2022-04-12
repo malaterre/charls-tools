@@ -23,7 +23,7 @@ bool jls::detect(source& s, image_info const&) const
     {
         charls::jpegls_decoder decoder;
         std::vector<uint8_t> buf;
-        buf.resize(64);
+        buf.resize(64 * 2);
         s.read(buf.data(), buf.size());
         decoder.source(buf);
         decoder.read_header();
@@ -40,7 +40,7 @@ void jls::read_info(source& fs, image& i) const
     fs.rewind();
     charls::jpegls_decoder decoder;
     std::vector<uint8_t> buf;
-    buf.resize(64);
+    buf.resize(64 * 2); // SPIFF header need a bit more than 64 bytes
     fs.read(buf.data(), buf.size());
     decoder.source(buf);
     // comment handling, must be setup before any read_* function
