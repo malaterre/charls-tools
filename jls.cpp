@@ -105,12 +105,18 @@ static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& 
         if (options.interleave_mode != charls::interleave_mode::none)
             throw std::invalid_argument("Invalid interleave_mode for single component. Use 'none'");
     }
+    auto interleave_mode = img.get_image_info().interleave_mode();
+    if (options.has_interleave_mode)
+    {
+        // user wants to override default interleave mode:
+        interleave_mode = options.interleave_mode;
+    }
 
     charls::jpegls_encoder encoder;
 
     // setup encoder using compressor's options:
     encoder
-        .interleave_mode(options.interleave_mode)                   // interleave_mode
+        .interleave_mode(interleave_mode)                           // interleave_mode
         .near_lossless(options.near_lossless)                       // near_lossless
         .preset_coding_parameters(options.preset_coding_parameters) // preset_coding_parameters
         .color_transformation(options.color_transformation);        // color_transformation

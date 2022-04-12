@@ -10,6 +10,7 @@
 namespace jlst {
 struct jls_options final
 {
+    bool has_interleave_mode{};
     charls::interleave_mode interleave_mode{};
     int near_lossless{};
     charls::jpegls_pc_parameters preset_coding_parameters{};

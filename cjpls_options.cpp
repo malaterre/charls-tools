@@ -188,6 +188,7 @@ bool cjpls_options::process(int argc, char* argv[])
         }
         if (vm.count("interleave_mode"))
         {
+            jls_options_.has_interleave_mode = true;
             jls_options_.interleave_mode = string_to_interleave_mode(interleave_mode_str.c_str());
         }
         if (vm.count("preset_coding_parameters"))
