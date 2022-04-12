@@ -146,7 +146,7 @@ void jls::read_info(source& fs, image& i) const
     if (decoder.spiff_header_has_value())
     {
         auto& spiff_header = decoder.spiff_header();
-        if (!charls_jpegls_is_spiff_consistent_with_frame_info(&spiff_header, &i.get_image_info().frame_info()))
+        if (!charls_jpegls_is_spiff_consistent_with_frame_info(&spiff_header, &decoder.frame_info()))
         {
             throw std::invalid_argument("Inconsistent SPIFF header vs frame info");
         }
