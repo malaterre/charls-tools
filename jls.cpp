@@ -242,9 +242,9 @@ static std::vector<uint8_t> compress(image const& img, const jlst::jls_options& 
     (void)coltra_none;
 #endif
 
-    const auto transform_pixel_data{img.transform(options.interleave_mode)};
+    const auto transform_pixel_data{img.transform(interleave_mode)};
     size_t encoded_size;
-    if (options.interleave_mode == charls::interleave_mode::none)
+    if (interleave_mode == charls::interleave_mode::none)
     {
         encoded_size = encoder.encode(transform_pixel_data);
     }
