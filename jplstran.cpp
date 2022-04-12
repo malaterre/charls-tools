@@ -18,6 +18,12 @@ static void transform(jlst::tran_options& options)
         std::unique_ptr<jlst::jls> jls_format(ptr);
         jls_format->fix_jai(options.get_dest(0), options.get_source(0));
     }
+    else if (options.spiff)
+    {
+        jlst::jls* ptr = new jlst::jls;
+        std::unique_ptr<jlst::jls> jls_format(ptr);
+        jls_format->fix_spiff(options.get_dest(0), options.get_source(0));
+    }
     else
     {
         jlst::jls* ptr = new jlst::jls;

@@ -60,6 +60,9 @@ ITU-T.87) file. In particular it will not change image buffer where NEAR != 0.
 **--jai**
 :   Fix JPEG-LS header (JAI bug)
 
+**--spiff**
+:   Craft a SPIFF header to an existing bare codestream
+
 # BUGS
 
 See GitHub Issues: <https://github.com/malaterre/charls-tools/issues>

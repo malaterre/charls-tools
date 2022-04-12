@@ -35,6 +35,48 @@ bool jls::detect(source& s, image_info const&) const
     return false;
 }
 
+static bool charls_jpegls_is_spiff_consistant_with_frame_info(const charls_spiff_header* spiff_header,
+                                                              const charls_frame_info* frame_info)
+{
+    // width / height / bits_per_sample / component_count
+    return spiff_header->component_count == frame_info->component_count && spiff_header->height == frame_info->height &&
+           spiff_header->width == frame_info->width && spiff_header->bits_per_sample == frame_info->bits_per_sample;
+}
+
+static inline int32_t component_count_from_color_space(charls_spiff_color_space color_space) noexcept
+{
+    switch (color_space)
+    {
+    case charls::spiff_color_space::bi_level_black:
+        return 1;
+    case charls::spiff_color_space::ycbcr_itu_bt_709_video:
+        return 3;
+    case charls::spiff_color_space::none:
+        return 0;
+    case charls::spiff_color_space::ycbcr_itu_bt_601_1_rgb:
+        return 1;
+    case charls::spiff_color_space::ycbcr_itu_bt_601_1_video:
+        return 1;
+    case charls::spiff_color_space::grayscale:
+        return 1;
+    case charls::spiff_color_space::photo_ycc:
+        return 3;
+    case charls::spiff_color_space::rgb:
+        return 3;
+    case charls::spiff_color_space::cmy:
+        return 3;
+    case charls::spiff_color_space::cmyk:
+        return 4;
+    case charls::spiff_color_space::ycck:
+        return 4;
+    case charls::spiff_color_space::cie_lab:
+        return 3;
+    case charls::spiff_color_space::bi_level_white:
+        return 1;
+    }
+    return 0;
+}
+
 void jls::read_info(source& fs, image& i) const
 {
     fs.rewind();
@@ -53,7 +95,28 @@ void jls::read_info(source& fs, image& i) const
     }
 #endif
 
+    decoder.read_spiff_header();
     decoder.read_header();
+    if (decoder.spiff_header_has_value())
+    {
+        auto& spiff_header = decoder.spiff_header();
+        if (!charls_jpegls_is_spiff_consistant_with_frame_info(&spiff_header, &i.get_image_info().frame_info()))
+        {
+            throw std::invalid_argument("Inconsistent SPIFF header vs frame info");
+        }
+        auto& color_space = spiff_header.color_space;
+        if (color_space != charls::spiff_color_space::rgb && color_space != charls::spiff_color_space::grayscale)
+            throw std::invalid_argument("Unhandled color space");
+        const int32_t component_count = component_count_from_color_space(color_space);
+        if (component_count != spiff_header.component_count)
+        {
+            throw std::invalid_argument("Inconsistant color space");
+        }
+        if (spiff_header.compression_type != charls::spiff_compression_type::jpeg_ls)
+        {
+            throw std::invalid_argument("Unhandled compression type");
+        }
+    }
     i.get_image_info().frame_info() = decoder.frame_info();
     i.get_image_info().interleave_mode() = decoder.interleave_mode();
     i.get_image_info().comment() = comment;
@@ -288,6 +351,36 @@ void jls::fix_jai(dest& d, source& s) const
 
     d.write(encoded_source.data(), encoded_source.size());
 }
+
+void jls::fix_spiff(dest& d, source& s) const
+{
+    jlst::image input_image;
+    read_info(s, input_image);
+    auto& frame_info = input_image.get_image_info().frame_info();
+
+    s.rewind();
+    std::vector<uint8_t> encoded_source = s.read_bytes();
+    auto pos = find_marker(encoded_source, 0xda);
+    //    assert(pos == 0x0F + 2);
+
+    charls::jpegls_encoder encoder;
+    encoder.frame_info(frame_info);
+    std::vector<uint8_t> buffer(encoder.estimated_destination_size());
+    std::vector<uint8_t> inbuffer(encoder.estimated_destination_size());
+    encoder.destination(buffer);
+    const charls::spiff_color_space spiff_color_space =
+        frame_info.component_count == 1 ? charls::spiff_color_space::grayscale : charls::spiff_color_space::rgb;
+    encoder.write_standard_spiff_header(spiff_color_space);
+    // encode a black image for now. See:
+    // https://github.com/team-charls/charls/issues/187
+    encoder.encode(inbuffer);
+    auto spiff_start = find_marker(buffer, 0xe8);
+    const auto spiff_header = &buffer[0] + spiff_start - 2;
+    encoded_source.insert(encoded_source.begin() + 2, spiff_header, spiff_header + 34 + 10);
+
+    d.write(encoded_source.data(), encoded_source.size());
+}
+
 void jls::transform(dest& d, source& s, const tran_options& to) const
 {
     jlst::image input_image;

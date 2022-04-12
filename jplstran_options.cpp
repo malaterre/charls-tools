@@ -32,6 +32,7 @@ bool tran_options::process(int argc, char* argv[])
             ("transverse", "transverse")                                          // transverse
             ("wipe", po::value(&region_tuple), "wipe WxH+X+Y")                    // crop
             ("jai", po::value(&jai), "Fix JPEG-LS header (JAI bug)")              // JAI
+            ("spiff", po::value(&spiff), "Add SPIFF header to bare codestream")   // SPIFF
             ;
 
         po::positional_options_description p;
