@@ -77,6 +77,33 @@ static inline int32_t component_count_from_color_space(charls_spiff_color_space 
     return 0;
 }
 
+// lifted from libjpeg:
+static void examine_app14(const unsigned char* data, size_t len)
+{
+    if (len >= 12)
+    {
+        const char adobe[] = "Adobe";
+        if (memcmp(data, adobe, 5) == 0)
+        {
+            /* Found Adobe APP14 marker */
+            unsigned int version, flags0, flags1, transform;
+            version = (data[5] << 8) + data[6];
+            // version is '100' in the wild, but '101' spec, do not check
+            flags0 = (data[7] << 8) + data[8];
+            // 0 ? do not check
+            flags1 = (data[9] << 8) + data[10];
+            // 0 ? do no check
+            transform = data[11];
+            // enum:
+            // 0 None (ie RGB or CMYK)
+            // 1 YCbCr
+            // 2 YCCK
+            if (transform != 0)
+                throw std::invalid_argument("Unhandled color space in Adobe Marker");
+        }
+    }
+}
+
 void jls::read_info(source& fs, image& i) const
 {
     fs.rewind();
@@ -91,6 +118,19 @@ void jls::read_info(source& fs, image& i) const
     {
         decoder.at_comment([&comment](const void* data, const size_t size) noexcept {
             comment = std::string(static_cast<const char*>(data), size);
+        });
+    }
+#endif
+    // app marker was introduced after release 2.3.4:
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 3)
+    {
+        // search for APP14 (libjpeg -c option)
+        bool app14_found = false;
+        decoder.at_application_data([&app14_found](int32_t application_data_id, const void* data, size_t size) noexcept {
+            if (application_data_id == 14)
+            {
+                examine_app14((unsigned char*)data, size);
+            }
         });
     }
 #endif
