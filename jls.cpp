@@ -9,6 +9,7 @@
 #include "utils.h"
 
 #include <cassert>
+#include <cstring>
 #include <sstream>
 #include <vector>
 
@@ -77,6 +78,7 @@ static inline int32_t component_count_from_color_space(charls_spiff_color_space 
     return 0;
 }
 
+#if CHARLS_VERSION_MAJOR > 2 || (CHARLS_VERSION_MAJOR == 2 && CHARLS_VERSION_MINOR > 3)
 // lifted from libjpeg:
 static void examine_app14(const unsigned char* data, size_t len)
 {
@@ -88,10 +90,13 @@ static void examine_app14(const unsigned char* data, size_t len)
             /* Found Adobe APP14 marker */
             unsigned int version, flags0, flags1, transform;
             version = (data[5] << 8) + data[6];
+            (void)version;
             // version is '100' in the wild, but '101' spec, do not check
             flags0 = (data[7] << 8) + data[8];
+            (void)flags0;
             // 0 ? do not check
             flags1 = (data[9] << 8) + data[10];
+            (void)flags1;
             // 0 ? do no check
             transform = data[11];
             // enum:
@@ -103,6 +108,7 @@ static void examine_app14(const unsigned char* data, size_t len)
         }
     }
 }
+#endif
 
 void jls::read_info(source& fs, image& i) const
 {
