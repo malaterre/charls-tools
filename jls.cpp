@@ -35,7 +35,7 @@ bool jls::detect(source& s, image_info const&) const
     return false;
 }
 
-static bool charls_jpegls_is_spiff_consistant_with_frame_info(const charls_spiff_header* spiff_header,
+static bool charls_jpegls_is_spiff_consistent_with_frame_info(const charls_spiff_header* spiff_header,
                                                               const charls_frame_info* frame_info)
 {
     // width / height / bits_per_sample / component_count
@@ -100,7 +100,7 @@ void jls::read_info(source& fs, image& i) const
     if (decoder.spiff_header_has_value())
     {
         auto& spiff_header = decoder.spiff_header();
-        if (!charls_jpegls_is_spiff_consistant_with_frame_info(&spiff_header, &i.get_image_info().frame_info()))
+        if (!charls_jpegls_is_spiff_consistent_with_frame_info(&spiff_header, &i.get_image_info().frame_info()))
         {
             throw std::invalid_argument("Inconsistent SPIFF header vs frame info");
         }
@@ -110,7 +110,7 @@ void jls::read_info(source& fs, image& i) const
         const int32_t component_count = component_count_from_color_space(color_space);
         if (component_count != spiff_header.component_count)
         {
-            throw std::invalid_argument("Inconsistant color space");
+            throw std::invalid_argument("Inconsistent color space");
         }
         if (spiff_header.compression_type != charls::spiff_compression_type::jpeg_ls)
         {
